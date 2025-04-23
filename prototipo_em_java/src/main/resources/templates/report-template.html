@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>FHIR Test Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
+        .passed { background-color: #e6ffe6; }
+        .failed { background-color: #ffe6e6; }
+    </style>
+</head>
+<body>
+<h1>FHIR Test Report</h1>
+<p>Generated: <span th:text="${timestamp}"></span></p>
+
+<div th:each="result : ${results}"
+     th:class="${result.passed} ? 'test passed' : 'test failed'">
+    <h2 th:text="${result.testId}"></h2>
+    <p>Status: <span th:text="${result.passed} ? 'PASSED' : 'FAILED'"></span></p>
+
+    <div th:if="${!result.passed}">
+        <h3>Issues:</h3>
+        <ul>
+            <li th:each="diff : ${result.differences}"
+                th:text="${diff.message} + ' (' + ${diff.severity} + ')'"></li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>
