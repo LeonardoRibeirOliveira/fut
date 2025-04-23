@@ -6,7 +6,7 @@ context:
     - br.ufg.cgis.rnds-lite#0.2.4
   profiles:
     - http://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo
-instance_path: src\test\resources\instances\patient_example.json
+instance_path: prototipo_em_java/src/test/resources/instances/patient_example.json
 expected_results:
   status: success
   errors: []

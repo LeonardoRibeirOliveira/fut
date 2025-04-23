@@ -1,1 +1,0 @@
-# Colocar o validador_cli.jar nesta pasta

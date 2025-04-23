@@ -11,7 +11,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class FhirValidator {
-    private static final String VALIDATOR_JAR = "prototipo em java/lib/validator_cli.jar";
+    private static final String VALIDATOR_JAR = "prototipo_em_java/lib/validator_cli.jar";
     private static final String FHIR_VERSION = "4.0.1";
     private static final int TIMEOUT_SECONDS = 30;
 
