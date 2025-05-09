@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FHIR Test Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
+        .passed { background-color: #e6ffe6; }
+        .failed { background-color: #ffe6e6; }
+    </style>
+</head>
+<body>
+<h1>FHIR Test Report</h1>
+<p>Generated: <span></span></p>
+
+<div class="test failed">
+    <h2>patient-001.yaml</h2>
+    <p>Status: <span>FAILED</span></p>
+
+    <div>
+        <h3>Issues:</h3>
+        <ul>
+            <li>Arquivo de instância não encontrado: src\test\resources\prototipo_em_java\instances\patient_example.json
+Test ID: Patient-001
+Saída bruta do validador:
+Verifique o caminho do arquivo no teste YAML (FATAL)</li>
+        </ul>
+    </div>
+</div>
+
+<div class="test failed">
+    <h2>patient-001.yaml</h2>
+    <p>Status: <span>FAILED</span></p>
+
+    <div>
+        <h3>Issues:</h3>
+        <ul>
+            <li>Validador retornou código de erro: 1
+Test ID: Patient-001
+Saída bruta do validador:
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+FHIR Validation tool Version 6.5.19 (Git# e13d94c86167). Built 2025-04-17T08:12:51.603Z (6 days old)
+  Java:   17.0.13 from C:\Users\vsben_332kka0\.jdks\corretto-17.0.13 on amd64 (64bit). 5092MB available
+  Paths:  Current = C:\Users\vsben_332kka0\IdeaProjects\fut2, Package Cache = C:\Users\vsben_332kka0\.fhir\packages
+  Params: -version 4.0.1 -ig br.go.ses.core#0.0.1 -profile https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo C:\Users\vsben_332kka0\IdeaProjects\fut2\src\test\resources\instances\patient_example.json
+  Locale: /
+  Jurisdiction: Brazil
+Loading
+  Load FHIR v4.0 from hl7.fhir.r4.core#4.0.1  Load hl7.terminology.r4#6.2.0 - 4287 resources (00:20.951)
+  Load hl7.fhir.uv.extensions.r4#5.2.0 - 758 resources (00:05.507)
+ - 8262 resources (00:00.000)
+  Load hl7.fhir.uv.extensions.r5#5.1.0 - 1396 resources (00:03.627)
+  Load hl7.terminology#6.2.0 - 4287 resources (00:03.488)
+  Load hl7.terminology.r5#6.2.0 - 4287 resources (00:07.944)
+  Load hl7.fhir.uv.extensions#5.2.0 - 758 resources (00:00.017)
+  Terminology server http://tx.fhir.org - Version Connected to Terminology Server at http://tx.fhir.org (00:01.369)
+  Load hl7.terminology.r4#6.1.0 - 4278 resources (00:04.740)
+  Load hl7.fhir.uv.extensions.r4#5.1.0 - 1396 resources (00:11.054)
+  Load hl7.terminology.r4#6.0.2 - 4243 resources (00:08.557)
+  Load br.ufg.cgis.rnds-lite#0.2.4 - 116 resources (00:00.004)
+  Load br.go.ses.core#0.0.1 - 173 resources (00:00.183)
+  Package Summary: [hl7.fhir.r4.core#4.0.1, hl7.fhir.xver-extensions#0.1.0, hl7.terminology.r4#6.2.0, hl7.fhir.uv.extensions.r4#5.2.0, hl7.fhir.uv.extensions.r5#5.1.0, hl7.terminology#6.2.0, hl7.terminology.r5#6.2.0, hl7.fhir.uv.extensions#5.2.0, hl7.terminology.r4#6.1.0, hl7.fhir.uv.extensions.r4#5.1.0, hl7.terminology.r4#6.0.2, br.ufg.cgis.rnds-lite#0.2.4, br.go.ses.core#0.0.1]
+  Terminology Cache at C:\Users\VSBEN_~1\AppData\Local\Temp\default-tx-cache
+  Get set...  go (00:28.581)
+Cached new session. Cache size = 1
+Validating
+  Profiles: [https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo]
+  Validate C:\Users\vsben_332kka0\IdeaProjects\fut2\src\test\resources\instances\patient_example.json
+Validate Patient against https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1..........20  Load br.go.ses.core#0.0.1 - 0 resources (00:15.770)
+..........40..  Load br.ufg.cgis.rnds-lite#0.2.4 - 0 resources (00:02.398)
+........60..........80.........|
+Internal error in location for message: &#39;Error @1, 35: Premature ExpressionNode termination at unexpected token &quot;[&quot;&#39;, loc = &#39;Patient.extension[0].extension[0][url=&#39;mae&#39;]&#39;, err = &#39;Sub-extension url &#39;mae&#39; is not defined by the Extension https://fhir.saude.go.gov.br/r4/core/StructureDefinition/filiacao|0.0.1&#39;
+Internal error in location for message: &#39;Error @1, 35: Premature ExpressionNode termination at unexpected token &quot;[&quot;&#39;, loc = &#39;Patient.extension[0].extension[1][url=&#39;pai&#39;]&#39;, err = &#39;Sub-extension url &#39;pai&#39; is not defined by the Extension https://fhir.saude.go.gov.br/r4/core/StructureDefinition/filiacao|0.0.1&#39;
+ 00:01.629
+Done. Times: Loading: 01:36.701, validation: 00:19.800. Memory = 775Mb
+
+*FAILURE*: 29 errors, 12 warnings, 5 notes
+  Error @ Patient.identifier[0].type.coding[0].code (line 56, col8): Unknown code &#39;CNS&#39; in the CodeSystem &#39;http://terminology.hl7.org/CodeSystem/v2-0203&#39; version &#39;4.0.0&#39;
+  Error @ Patient.address[0].city (line 100, col24): The value provided (&#39;Goiânia&#39;) was not found in the value set &#39;Município&#39; (http://www.saude.gov.br/fhir/r4/ValueSet/BRMunicipio-1.0|0.2.4), and a code is required from this value set  (error message = The System URI could not be determined for the code &#39;Goiânia&#39; in the ValueSet &#39;http://www.saude.gov.br/fhir/r4/ValueSet/BRMunicipio-1.0|0.2.4&#39;; The provided code &#39;#Goiânia&#39; was not found in the value set &#39;http://www.saude.gov.br/fhir/r4/ValueSet/BRMunicipio-1.0|0.2.4&#39;)
+  Error @ Patient.extension[0].extension[0][url=&#39;mae&#39;] (line 15, col10): Sub-extension url &#39;mae&#39; is not defined by the Extension https://fhir.saude.go.gov.br/r4/core/StructureDefinition/filiacao|0.0.1
+  Error @ Patient.extension[0].extension[1][url=&#39;pai&#39;] (line 19, col10): Sub-extension url &#39;pai&#39; is not defined by the Extension https://fhir.saude.go.gov.br/r4/core/StructureDefinition/filiacao|0.0.1
+  Error @ Patient.extension[2].value.ofType(CodeableConcept).coding[0].system (line 35, col8): The Coding references a value set, not a code system (&#39;http://hl7.org/fhir/ValueSet/iso3166-1-3&#39;)
+  Error @ Patient.identifier[0] (line 55, col6): This element does not match any known slice defined in the profile https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1 and slicing is CLOSED: Patient.identifier[0]: Does not match slice &#39;cpf&#39; (discriminator: system.where(value = &#39;https://fhir.saude.go.gov.br/sid/cpf&#39;).exists()), Patient.identifier[0]: Does not match slice &#39;cns&#39; (discriminator: system.where(value = &#39;https://fhir.saude.go.gov.br/sid/cns&#39;).exists())
+  Error @ Patient.identifier[1] (line 66, col6): This element does not match any known slice defined in the profile https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1 and slicing is CLOSED: Patient.identifier[1]: Does not match slice &#39;cpf&#39; (discriminator: system.where(value = &#39;https://fhir.saude.go.gov.br/sid/cpf&#39;).exists()), Patient.identifier[1]: Does not match slice &#39;cns&#39; (discriminator: system.where(value = &#39;https://fhir.saude.go.gov.br/sid/cns&#39;).exists())
+  Error @ Patient.identifier[1].type.coding[0].display (line 67, col8): Wrong Display Name &#39;CPF&#39; for http://terminology.hl7.org/CodeSystem/v2-0203#TAX. Valid display is &#39;Tax ID number&#39; (for the language(s) &#39;en&#39;)
+  Error @ Patient.address[0].line[0] (line 99, col34): This element does not match any known slice defined in the profile https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1 and slicing is CLOSED: Patient.address[0].line[0]: Does not match slice &#39;bairro&#39; (discriminator: extension.value.where(value = &#39;bairro&#39;).exists()), Patient.address[0].line[0]: Does not match slice &#39;logradouro&#39; (discriminator: extension.value.where(value = &#39;logradouro&#39;).exists()), Patient.address[0].line[0]: Does not match slice &#39;numero&#39; (discriminator: extension.value.where(value = &#39;numero&#39;).exists()), Patient.address[0].line[0]: Does not match slice &#39;complemento&#39; (discriminator: extension.value.where(value = &#39;complemento&#39;).exists()), Patient.address[0].line[0]: Does not match slice &#39;tipologradouro&#39; (discriminator: extension.value.where(value = &#39;tipologradouro&#39;).exists())
+  Error @ Patient (line 1, col2): Patient.active: max allowed = 0, but found 1 (from https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1)
+  Error @ Patient (line 1, col2): Slice &#39;Patient.extension:localNascimento&#39;: a matching slice is required, but not found (from https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1). Note that other slices are allowed in addition to this required slice
+  Error @ Patient (line 1, col2): Slice &#39;Patient.extension:nacionalidade&#39;: a matching slice is required, but not found (from https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1). Note that other slices are allowed in addition to this required slice
+  Error @ Patient (line 1, col2): Slice &#39;Patient.extension:raca&#39;: a matching slice is required, but not found (from https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1). Note that other slices are allowed in addition to this required slice
+  Error @ Patient (line 1, col2): Slice &#39;Patient.identifier:cns&#39;: a matching slice is required, but not found (from https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1). Note that other slices are allowed in addition to this required slice
+  Error @ Patient (line 1, col2): Slice &#39;Patient.identifier:cpf&#39;: a matching slice is required, but not found (from https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1). Note that other slices are allowed in addition to this required slice
+  Error @ Patient.extension[0] (line 12, col6): Slice &#39;Extension.extension:nome&#39;: a matching slice is required, but not found (from https://fhir.saude.go.gov.br/r4/core/StructureDefinition/filiacao|0.0.1). Note that other slices are allowed in addition to this required slice
+  Error @ Patient.extension[0] (line 12, col6): Slice &#39;Extension.extension:tipo&#39;: a matching slice is required, but not found (from https://fhir.saude.go.gov.br/r4/core/StructureDefinition/filiacao|0.0.1). Note that other slices are allowed in addition to this required slice
+  Error @ Patient.extension[1] (line 25, col6): The extension https://fhir.saude.go.gov.br/r4/core/StructureDefinition/localNascimento could not be found so is not allowed here
+  Error @ Patient.extension[2] (line 33, col6): The extension https://fhir.saude.go.gov.br/r4/core/StructureDefinition/nacionalidade could not be found so is not allowed here
+  Error @ Patient.extension[3] (line 43, col6): The extension https://fhir.saude.go.gov.br/r4/core/StructureDefinition/raca could not be found so is not allowed here
+  Error @ Patient.name[0] (line 79, col6): HumanName.family: max allowed = 0, but found 1 (from https://fhir.saude.go.gov.br/r4/core/StructureDefinition/nome-cidadao|0.0.1)
+  Error @ Patient.name[0] (line 79, col6): HumanName.given: max allowed = 0, but found 1 (from https://fhir.saude.go.gov.br/r4/core/StructureDefinition/nome-cidadao|0.0.1)
+  Error @ Patient.name[0] (line 79, col6): Patient.name:official.family: max allowed = 0, but found 1 (from https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1)
+  Error @ Patient.name[0] (line 79, col6): Patient.name:official.given: max allowed = 0, but found 1 (from https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1)
+  Error @ Patient.telecom[0] (line 87, col6): Patient.telecom:phone.use: max allowed = 0, but found 1 (from https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1)
+  Error @ Patient.address[0] (line 96, col6): Patient.address.country: max allowed = 0, but found 1 (from https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1)
+  Error @ Patient.address[0] (line 96, col6): Patient.address.state: max allowed = 0, but found 1 (from https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1)
+  Error @ Patient.address[0] (line 96, col6): Patient.address.type: max allowed = 0, but found 1 (from https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1)
+  Error @ Patient.extension[0] (line 12, col6): Constraint failed: NomeCompletoDeveConterNoMinimoDoisNomes: &#39;Nome deve ser composto por no mínimo nome e sobrenome&#39; (defined in https://fhir.saude.go.gov.br/r4/core/StructureDefinition/filiacao)
+  Information @ Patient.extension[0].extension[0] (line 15, col10): This element does not match any known slice defined in the profile https://fhir.saude.go.gov.br/r4/core/StructureDefinition/filiacao|0.0.1 (this may not be a problem, but you should check that it&#39;s not intended to match a slice)
+  Information @ Patient.extension[0].extension[1] (line 19, col10): This element does not match any known slice defined in the profile https://fhir.saude.go.gov.br/r4/core/StructureDefinition/filiacao|0.0.1 (this may not be a problem, but you should check that it&#39;s not intended to match a slice)
+  Information @ Patient.extension[1] (line 25, col6): This element does not match any known slice defined in the profile https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1 (this may not be a problem, but you should check that it&#39;s not intended to match a slice)
+  Information @ Patient.extension[2] (line 33, col6): This element does not match any known slice defined in the profile https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1 (this may not be a problem, but you should check that it&#39;s not intended to match a slice)
+  Information @ Patient.extension[3] (line 43, col6): This element does not match any known slice defined in the profile https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo|0.0.1 (this may not be a problem, but you should check that it&#39;s not intended to match a slice)
+  Warning @ Patient.identifier[0].type (line 56, col8): None of the codings provided are in the value set &#39;IdentifierType&#39; (http://hl7.org/fhir/ValueSet/identifier-type|4.0.1), and a coding should come from this value set unless it has no suitable code (note that the validator cannot judge what is suitable) (codes = http://terminology.hl7.org/CodeSystem/v2-0203#CNS)
+  Warning @ Patient.identifier[1].type (line 67, col8): None of the codings provided are in the value set &#39;IdentifierType&#39; (http://hl7.org/fhir/ValueSet/identifier-type|4.0.1), and a coding should come from this value set unless it has no suitable code (note that the validator cannot judge what is suitable) (codes = http://terminology.hl7.org/CodeSystem/v2-0203#TAX)
+  Warning @ Patient.extension[1].url (line 26, col88): URL value &#39;https://fhir.saude.go.gov.br/r4/core/StructureDefinition/localNascimento&#39; does not resolve
+  Warning @ Patient.extension[2].url (line 34, col86): URL value &#39;https://fhir.saude.go.gov.br/r4/core/StructureDefinition/nacionalidade&#39; does not resolve
+  Warning @ Patient.extension[3].url (line 44, col77): URL value &#39;https://fhir.saude.go.gov.br/r4/core/StructureDefinition/raca&#39; does not resolve
+  Warning @ Patient.extension[3].value.ofType(CodeableConcept).coding[0].system (line 47, col72): URL value &#39;http://www.saude.gov.br/fhir/r4/ValueSet/raca-cor&#39; does not resolve
+  Warning @ Patient.identifier[0].system (line 63, col67): URL value &#39;http://www.saude.gov.br/fhir/r4/NamingSystem/cns&#39; does not resolve
+  Warning @ Patient.identifier[1].system (line 74, col67): URL value &#39;http://www.saude.gov.br/fhir/r4/NamingSystem/cpf&#39; does not resolve
+  Warning @ Patient.extension[3].value.ofType(CodeableConcept).coding[0].system (line 45, col8): A definition for CodeSystem &#39;http://www.saude.gov.br/fhir/r4/ValueSet/raca-cor&#39; could not be found, so the code cannot be validated
+  Warning @ Patient (line 1, col2): Constraint failed: BrasileiroSeSomenteSeNasceNoBrasil: &#39;Brasileiro SE SOMENTE SE nasce no Brasil.&#39; (defined in https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo)
+  Warning @ Patient (line 1, col2): Constraint failed: CidadeNascimento: &#39;Brasileiro informa a cidade de nascimento. Não brasileiro não informa a cidade de nascimento.&#39; (defined in https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo)
+  Warning @ Patient.telecom[0] (line 87, col6): Constraint failed: NumeroTelefoneValido: &#39;Máscara de telefone para números nacionais (xx) xxxx-xxxx ou (xx) xxxxx-xxxx. Para números internacionais, o + significa que será utilizado o código do país, a lógica é de 1 a 3 dígitos de código do país (+X, +XX ou +XXX), na sequência uma quantidade de dígitos entre o código de área e o número propriamente dito que, somados ao código do país, não podem exceder 15 dígitos.&#39; (defined in https://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo)
+Done. Times: Loading: 01:36.701, validation: 00:19.800. Max Memory = 4Gb
+ (FATAL)</li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>
