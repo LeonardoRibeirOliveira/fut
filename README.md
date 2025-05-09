@@ -60,11 +60,9 @@ O **FHIRUT** é uma ferramenta para automação de testes de conformidade de rec
 - **.NET**: Robustez para processamento paralelo, chamadas de sistema (Java), e manipulação de FHIR/YAML.  
 - **Modular**: Facilita substituição de componentes (ex.: trocar validador oficial por outro).  
 
----
-
 > **Status Atual**: Backend funcional com geração de relatórios, frontend em evolução com protótipos de dashboard e upload. 
 
-> ---
+>---
 
 ## 🔮 **Próximos Passos**
 
@@ -85,5 +83,4 @@ O **FHIRUT** é uma ferramenta para automação de testes de conformidade de rec
 - [ ] Documentar a API com Swagger (ou alternativa).
 - [ ] Criar tutorial passo a passo para novos usuários.
 
-> Essas melhorias visam tornar o FHIRUT uma ferramenta robusta, intuitiva e extensível para validação automatizada de conformidade FHIR.
  
