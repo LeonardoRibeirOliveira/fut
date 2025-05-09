@@ -38,3 +38,55 @@ build/
 .DS_Store
 
 lib/validator_cli.jar
+
+# Backend .NET
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/*.user
+**/*.suo
+**/launchSettings.json
+
+# Frontend Angular
+/node_modules/
+/dist/
+/.angular/cache
+
+# Dados do FHIRUT (não versionados)
+/backend/fhirut-data/           # <<< Pasta crítica a ser ignorada!
+/backend/FHIRUT.API/wwwroot/test-cases/
+
+# Binários do validador FHIR
+validator_cli.jar                # Deve ser baixado separadamente
+
+# Ambiente e IDE
+.DS_Store
+*.swp
+*.swo
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.idea/
+
+# Configurações locais
+.env
+*.local
+appsettings.Development.json
+
+# Arquivos de usuário temporários
+*.tmp
+*.temp
+
+# Editor/IDE específico
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Lock files (evita conflitos)
+package-lock.json
+yarn.lock
