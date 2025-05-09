@@ -37,8 +37,6 @@ build/
 ### Mac OS ###
 .DS_Store
 
-lib/validator_cli.jar
-
 # Backend .NET
 **/bin/
 **/obj/
@@ -53,12 +51,15 @@ lib/validator_cli.jar
 /dist/
 /.angular/cache
 
-# Dados do FHIRUT (não versionados)
-/backend/fhirut-data/           # <<< Pasta crítica a ser ignorada!
-/backend/FHIRUT.API/wwwroot/test-cases/
+# Dados da aplicação (não versionados)
+/fhirut-data/                   # Pasta principal de dados
+!fhirut-data/system/            # Exceto a pasta system (se necessário)
+fhirut-data/system/validator_cli.jar # O validador será baixado automaticamente
 
-# Binários do validador FHIR
-validator_cli.jar                # Deve ser baixado separadamente
+# Binários do validador FHIR (alternativo)
+lib/validator_cli.jar           # Cópia local do validador
+validator_cli                # Deve ser baixado separadamente
+/aplicacao_final/backend/FHIRUT.API/fhirut-data/system/validator_cli.jar
 
 # Ambiente e IDE
 .DS_Store
@@ -90,3 +91,4 @@ appsettings.Development.json
 # Lock files (evita conflitos)
 package-lock.json
 yarn.lock
+

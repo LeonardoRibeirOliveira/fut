@@ -49,14 +49,26 @@ namespace FHIRUT.API.Services
                 $"-jar {_options.ValidatorPath}",
                 $"-version 4.0.1",
                 $"-output {tempOutput}",
+                $"-language pt-BR",
+                $"-showMessagesFromReferences",
                 instancePath
             };
 
             if (profiles?.Any() == true)
-                arguments.Add($"-profile {string.Join(",", profiles)}");
+            {
+                foreach (var profile in profiles)
+                {
+                    arguments.Add($"-profile {profile}");
+                }
+            }
 
             if (igs?.Any() == true)
-                arguments.Add($"-ig {string.Join(",", igs)}");
+            {
+                foreach (var ig in igs)
+                {
+                    arguments.Add($"-ig {ig}");
+                }
+            }
 
             var psi = new ProcessStartInfo
             {
@@ -64,7 +76,8 @@ namespace FHIRUT.API.Services
                 Arguments = string.Join(" ", arguments),
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-                UseShellExecute = false
+                UseShellExecute = false,
+                CreateNoWindow = true
             };
 
             using var process = Process.Start(psi);
@@ -73,7 +86,7 @@ namespace FHIRUT.API.Services
             if (process.ExitCode != 0)
             {
                 var error = await process.StandardError.ReadToEndAsync();
-                throw new Exception($"Validation failed: {error}");
+                _logger.LogError("Validation failed for {Path}: {Error}", instancePath, error);
             }
 
             var result = await _fileSystem.File.ReadAllTextAsync(tempOutput);

@@ -4,7 +4,9 @@ namespace FHIRUT.API.Services.Interfaces
 {
     public interface IFileBasedTestService
     {
-        Task<TestCaseFileModel> SaveTestCaseAsync(string userId, TestCaseFileModel testCase, Stream yamlFile, Stream? jsonFile);
-        Task<ValidationResultModel> RunTestCaseAsync(string userId, string caseId);
+        Task<TestCaseFileModel?> SaveTestCaseAsync(string userId, TestCaseFileModel testCase, Stream yamlFile, Stream? jsonFile);
+        Task<ValidationResultModel?> RunTestCaseAsync(string userId, string caseId);
+        Task<IEnumerable<TestCaseFileModel>?> GetTestCasesAsync(string userId);
+        Task<TestCaseFileModel?> GetTestCaseAsync(string userId, string caseId);
     }
 }

@@ -18,36 +18,64 @@ public class TestCaseController : ControllerBase
         _logger = logger;
     }
 
-    [HttpPost("upload")]
-    public async Task<IActionResult> UploadTestCase(
+    [HttpPost("upload/batch")]
+    public async Task<IActionResult> UploadTestCasesBatch(
         [FromForm] string userId,
         [FromForm] string description,
-        IFormFile yamlFile,
-        IFormFile? jsonFile = null)
+        List<IFormFile> yamlFiles,
+        List<IFormFile>? jsonFiles = null)
     {
-        if (yamlFile == null || yamlFile.Length == 0)
-            return BadRequest("YAML file is required");
+        if (yamlFiles == null || !yamlFiles.Any())
+            return BadRequest("At least one YAML file is required");
 
-        var testCase = new TestCaseFileModel
-        {
-            Name = Path.GetFileNameWithoutExtension(yamlFile.FileName),
-            Description = description,
-            UserId = userId
-        };
+        var results = new List<TestCaseFileModel>();
 
         try
         {
-            var result = await _testService.SaveTestCaseAsync(
-                userId,
-                testCase,
-                yamlFile.OpenReadStream(),
-                jsonFile?.OpenReadStream());
+            for (int i = 0; i < yamlFiles.Count; i++)
+            {
+                var yamlFile = yamlFiles[i];
+                var jsonFile = jsonFiles?.Count > i ? jsonFiles[i] : null;
 
-            return CreatedAtAction(nameof(GetTestCase), new { userId, caseId = result.Id }, result);
+                if (yamlFile.Length == 0)
+                    continue;
+
+                var testCase = new TestCaseFileModel
+                {
+                    Name = Path.GetFileNameWithoutExtension(yamlFile.FileName),
+                    Description = $"{description} [{i + 1}/{yamlFiles.Count}]",
+                    UserId = userId
+                };
+
+                var result = await _testService.SaveTestCaseAsync(
+                    userId,
+                    testCase,
+                    yamlFile.OpenReadStream(),
+                    jsonFile?.OpenReadStream());
+
+                if (result != null) results.Add(result);
+            }
+
+            return CreatedAtAction(nameof(GetTestCasesBatch), new { userId }, results);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error uploading test case");
+            _logger.LogError(ex, "Error uploading batch test cases");
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    [HttpGet("{userId}")]
+    public async Task<IActionResult> GetTestCasesBatch(string userId)
+    {
+        try
+        {
+            var testCases = await _testService.GetTestCasesAsync(userId);
+            return Ok(testCases);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving test cases");
             return StatusCode(500, "Internal server error");
         }
     }
@@ -55,21 +83,51 @@ public class TestCaseController : ControllerBase
     [HttpGet("{userId}/{caseId}")]
     public async Task<IActionResult> GetTestCase(string userId, string caseId)
     {
-        // Implementar lógica de busca
-        return Ok();
-    }
-
-    [HttpPost("{userId}/{caseId}/run")]
-    public async Task<IActionResult> RunTestCase(string userId, string caseId)
-    {
         try
         {
-            var result = await _testService.RunTestCaseAsync(userId, caseId);
-            return Ok(result);
+            var testCase = await _testService.GetTestCaseAsync(userId, caseId);
+            if (testCase == null)
+                return NotFound();
+
+            return Ok(testCase);
         }
-        catch (FileNotFoundException)
+        catch (Exception ex)
         {
-            return NotFound();
+            _logger.LogError(ex, "Error retrieving test case");
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    [HttpPost("batch/run")]
+    public async Task<IActionResult> RunTestCasesBatch(
+    [FromBody] BatchRunRequest request)
+    {
+        if (request?.TestCaseIds == null || !request.TestCaseIds.Any())
+            return BadRequest("At least one test case ID is required");
+
+        try
+        {
+            var results = new List<ValidationResultModel>();
+
+            foreach (var caseId in request.TestCaseIds)
+            {
+                var result = await _testService.RunTestCaseAsync(request.UserId, caseId);
+                if(result != null) results.Add(result);
+            }
+
+            return Ok(new BatchRunResponse
+            {
+                UserId = request.UserId,
+                Results = results,
+                TotalCount = results.Count,
+                SuccessCount = results.Count(r => r.Status == "success"),
+                ErrorCount = results.Count(r => r.Status == "error")
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error running batch validation");
+            return StatusCode(500, "Internal server error");
         }
     }
 }
