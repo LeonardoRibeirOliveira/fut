@@ -59,7 +59,7 @@ fhirut-data/system/validator_cli.jar # O validador será baixado automaticamente
 # Binários do validador FHIR (alternativo)
 lib/validator_cli.jar           # Cópia local do validador
 validator_cli                # Deve ser baixado separadamente
-/aplicacao_final/backend/fhirut-data/system/validator_cli.jar
+/aplicacao/backend/fhirut-data/system/validator_cli.jar
 
 # Ambiente e IDE
 .DS_Store
