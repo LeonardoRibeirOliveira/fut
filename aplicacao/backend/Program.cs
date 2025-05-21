@@ -1,9 +1,9 @@
 using System.IO.Abstractions;
-using FHIRUT.API.Models;
 using Microsoft.AspNetCore.Http.Features;
 using FHIRUT.API.Services;
 using FHIRUT.API.Services.Interfaces;
 using Microsoft.Extensions.Options;
+using FHIRUT.API.Models.CLI;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +18,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IFileSystem>(new FileSystem());
 
 // Configurar caminho base
-builder.Services.Configure<DataOptions>(builder.Configuration.GetSection("Data"));
+builder.Services.Configure<ValidadorCliConfig>(builder.Configuration.GetSection("Data"));
 
 builder.Services.AddSingleton<IFHIRValidatorService, FHIRValidatorService>();
 builder.Services.AddSingleton<IFileBasedTestService, FileBasedTestService>();
@@ -47,6 +47,15 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.Use(async (context, next) =>
+    {
+        if (context.Request.Path == "/")
+        {
+            context.Response.Redirect("/swagger");
+            return;
+        }
+        await next();
+    });
 }
 
 app.UseHttpsRedirection();
@@ -55,7 +64,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Obter configurações
-var dataOptions = app.Services.GetRequiredService<IOptions<DataOptions>>().Value;
+var dataOptions = app.Services.GetRequiredService<IOptions<ValidadorCliConfig>>().Value;
 
 // Criar estrutura de pastas inicial
 var fileSystem = app.Services.GetRequiredService<IFileSystem>();

@@ -1,5 +1,7 @@
 ﻿using System.IO.Abstractions;
-using FHIRUT.API.Models;
+using System.Text.Json;
+using FHIRUT.API.Models.Outcome;
+using FHIRUT.API.Models.Tests;
 using FHIRUT.API.Services.Interfaces;
 
 namespace FHIRUT.API.Services
@@ -17,10 +19,10 @@ namespace FHIRUT.API.Services
             _validatorService = validatorService;
         }
 
-        public async Task<TestCaseFileModel?> SaveTestCaseAsync(string userId, TestCaseFileModel testCase, Stream yamlFile, Stream? jsonFile)
+        public async Task<TestCaseDefinition?> SaveTestCaseAsync(string userId, TestCaseDefinition testCase, Stream yamlFile, Stream? jsonFile)
         {
             var userPath = Path.Combine(_baseDataPath, "users", userId);
-            var casePath = Path.Combine(userPath, "test-cases", testCase.Id);
+            var casePath = Path.Combine(userPath, "test-cases", testCase.TestId);
 
             _fileSystem.Directory.CreateDirectory(casePath);
 
@@ -29,7 +31,9 @@ namespace FHIRUT.API.Services
             {
                 await yamlFile.CopyToAsync(stream);
             }
-            testCase.YamlPath = yamlPath;
+
+            if (testCase.GetType().GetProperty("YamlPath") != null)
+                testCase.GetType().GetProperty("YamlPath")?.SetValue(testCase, yamlPath);
 
             if (jsonFile != null)
             {
@@ -38,13 +42,16 @@ namespace FHIRUT.API.Services
                 {
                     await jsonFile.CopyToAsync(stream);
                 }
-                testCase.JsonPath = jsonPath;
+
+                if (testCase.GetType().GetProperty("JsonPath") != null)
+                    testCase.GetType().GetProperty("JsonPath")?.SetValue(testCase, jsonPath);
             }
 
             return testCase;
         }
 
-        public async Task<ValidationResultModel?> RunTestCaseAsync(string userId, string caseId)
+
+        public async Task<OperationOutcome?> RunTestCaseAsync(string userId, string caseId)
         {
             var casePath = Path.Combine(_baseDataPath, "users", userId, "test-cases", caseId);
             var yamlPath = Path.Combine(casePath, "test-case.yaml");
@@ -56,66 +63,54 @@ namespace FHIRUT.API.Services
             var yamlContent = await _fileSystem.File.ReadAllTextAsync(yamlPath);
             var profiles = ExtractProfilesFromYaml(yamlContent);
 
-            var operationOutcome = await _validatorService.ValidateAsync(
+            var operationOutcomeJson = await _validatorService.ValidateAsync(
                 jsonPath,
                 profiles,
                 null);
 
-            return ParseOperationOutcome(caseId, operationOutcome);
+            return ParseOperationOutcome(operationOutcomeJson);
         }
 
-        public async Task<IEnumerable<TestCaseFileModel>?> GetTestCasesAsync(string userId)
+        public async Task<IEnumerable<TestCaseDefinition>?> GetTestCasesAsync(string userId)
         {
             var userPath = Path.Combine(_baseDataPath, "users", userId, "test-cases");
 
             if (!_fileSystem.Directory.Exists(userPath))
-                return Enumerable.Empty<TestCaseFileModel>();
+                return Enumerable.Empty<TestCaseDefinition>();
 
-            var testCases = new List<TestCaseFileModel>();
+            var testCases = new List<TestCaseDefinition>();
             var caseDirectories = _fileSystem.Directory.GetDirectories(userPath);
 
             foreach (var caseDir in caseDirectories)
             {
-                var caseId = Path.GetFileName(caseDir);
                 var yamlPath = Path.Combine(caseDir, "test-case.yaml");
-                var jsonPath = Path.Combine(caseDir, "instance.json");
 
                 if (_fileSystem.File.Exists(yamlPath))
                 {
-                    testCases.Add(new TestCaseFileModel
+                    using var reader = _fileSystem.File.OpenText(yamlPath);
+                    var yamlContent = await reader.ReadToEndAsync();
+
+                    var deserializer = new YamlDotNet.Serialization.DeserializerBuilder()
+                        .IgnoreUnmatchedProperties()
+                        .Build();
+
+                    var testCase = deserializer.Deserialize<TestCaseDefinition>(yamlContent);
+
+                    // Opcional: preencher InstancePath se não estiver no YAML
+                    if (string.IsNullOrEmpty(testCase.InstancePath))
                     {
-                        Id = caseId,
-                        Name = Path.GetFileNameWithoutExtension(yamlPath),
-                        YamlPath = yamlPath,
-                        JsonPath = _fileSystem.File.Exists(jsonPath) ? jsonPath : null,
-                        UserId = userId,
-                        CreatedAt = _fileSystem.File.GetLastWriteTime(yamlPath)
-                    });
+                        var jsonPath = Path.Combine(caseDir, "instance.json");
+                        if (_fileSystem.File.Exists(jsonPath))
+                            testCase.InstancePath = jsonPath;
+                    }
+
+                    testCases.Add(testCase);
                 }
             }
 
-            return testCases.OrderByDescending(tc => tc.CreatedAt);
+            return testCases;
         }
 
-        public async Task<TestCaseFileModel?> GetTestCaseAsync(string userId, string caseId)
-        {
-            var casePath = Path.Combine(_baseDataPath, "users", userId, "test-cases", caseId);
-            var yamlPath = Path.Combine(casePath, "test-case.yaml");
-            var jsonPath = Path.Combine(casePath, "instance.json");
-
-            if (!_fileSystem.File.Exists(yamlPath))
-                return null;
-
-            return new TestCaseFileModel
-            {
-                Id = caseId,
-                Name = Path.GetFileNameWithoutExtension(yamlPath),
-                YamlPath = yamlPath,
-                JsonPath = _fileSystem.File.Exists(jsonPath) ? jsonPath : null,
-                UserId = userId,
-                CreatedAt = _fileSystem.File.GetLastWriteTime(yamlPath)
-            };
-        }
 
         private List<string> ExtractProfilesFromYaml(string yamlContent)
         {
@@ -135,23 +130,29 @@ namespace FHIRUT.API.Services
                 }
             }
 
-            return profiles.Any() ? profiles : new List<string> { "http://perfil.fhir.br/paciente" };
+            return profiles.Any() ? profiles : new List<string> { "http://hl7.org/fhir/StructureDefinition/Patient" };
         }
 
-        private ValidationResultModel ParseOperationOutcome(string caseId, string operationOutcome)
+        private OperationOutcome? ParseOperationOutcome(string operationOutcomeJson)
         {
-            var hasErrors = operationOutcome.Contains("\"severity\":\"error\"");
-            var hasWarnings = operationOutcome.Contains("\"severity\":\"warning\"");
+            if (string.IsNullOrWhiteSpace(operationOutcomeJson))
+                return null;
 
-            var result = new ValidationResultModel
+            var options = new JsonSerializerOptions
             {
-                TestCaseId = caseId,
-                Status = hasErrors ? "error" : (hasWarnings ? "warning" : "success"),
-                RawOperationOutcome = operationOutcome
+                PropertyNameCaseInsensitive = true
             };
 
-            return result;
+            try
+            {
+                var outcome = JsonSerializer.Deserialize<OperationOutcome>(operationOutcomeJson, options);
+                return outcome;
+            }
+            catch
+            {
+                // Se não conseguir desserializar, retorna nulo
+                return null;
+            }
         }
-
     }
 }

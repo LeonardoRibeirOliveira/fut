@@ -1,0 +1,19 @@
+test_id: Patient-001
+description: Nome do paciente não é fornecido.
+context:
+  igs:
+    - br.go.ses.core#0.0.1
+  profiles:
+    - http://hl7.org/fhir/StructureDefinition/Patient
+  resources:
+    - valuesets/my-valueset.json
+    - instancias/
+instance_path: instances/patient_example.json
+expected_results:
+  status: success
+  errors: []
+  warnings: []
+  informations: []
+  invariants:
+    - expression: "OperationOutcome.issues.count() = 0"
+      expected: true

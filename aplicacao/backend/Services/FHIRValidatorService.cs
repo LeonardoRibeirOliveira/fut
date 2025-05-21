@@ -1,18 +1,19 @@
-﻿using FHIRUT.API.Models;
+﻿using FHIRUT.API.Models.CLI;
 using FHIRUT.API.Services.Interfaces;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.IO.Abstractions;
+using System.Text.Json;
 
 namespace FHIRUT.API.Services
 {
     public class FHIRValidatorService : IFHIRValidatorService
     {
         private readonly IFileSystem _fileSystem;
-        private readonly DataOptions _options;
+        private readonly ValidadorCliConfig _options;
         private readonly ILogger<FHIRValidatorService> _logger;
 
-        public FHIRValidatorService(IFileSystem fileSystem, IOptions<DataOptions> options, ILogger<FHIRValidatorService> logger)
+        public FHIRValidatorService(IFileSystem fileSystem, IOptions<ValidadorCliConfig> options, ILogger<FHIRValidatorService> logger)
         {
             _fileSystem = fileSystem;
             _options = options.Value;
@@ -25,16 +26,26 @@ namespace FHIRUT.API.Services
         {
             if (!_fileSystem.File.Exists(_options.ValidatorPath))
             {
-                _logger.LogInformation("Downloading FHIR validator...");
-                _fileSystem.Directory.CreateDirectory(Path.GetDirectoryName(_options.ValidatorPath)!);
+                try
+                {
+                    _logger.LogInformation("Downloading FHIR validator...");
+                    _fileSystem.Directory.CreateDirectory(Path.GetDirectoryName(_options.ValidatorPath)!);
 
-                using var httpClient = new HttpClient();
-                var response = await httpClient.GetAsync(_options.ValidatorDownloadUrl);
-                await using var stream = await response.Content.ReadAsStreamAsync();
-                await using var fileStream = _fileSystem.File.Create(_options.ValidatorPath);
-                await stream.CopyToAsync(fileStream);
+                    using var httpClient = new HttpClient();
+                    var response = await httpClient.GetAsync(_options.ValidatorDownloadUrl);
+                    response.EnsureSuccessStatusCode();
 
-                _logger.LogInformation("Validator downloaded to {Path}", _options.ValidatorPath);
+                    await using var stream = await response.Content.ReadAsStreamAsync();
+                    await using var fileStream = _fileSystem.File.Create(_options.ValidatorPath);
+                    await stream.CopyToAsync(fileStream);
+
+                    _logger.LogInformation("Validator downloaded to {Path}", _options.ValidatorPath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to download FHIR validator.");
+                    throw;
+                }
             }
         }
 

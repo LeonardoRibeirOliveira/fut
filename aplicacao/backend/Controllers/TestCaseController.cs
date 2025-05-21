@@ -1,5 +1,5 @@
-﻿using FHIRUT.API.Models;
-using FHIRUT.API.Services;
+﻿using FHIRUT.API.Models.Outcome;
+using FHIRUT.API.Models.Tests;
 using FHIRUT.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,8 +18,8 @@ public class TestCaseController : ControllerBase
         _logger = logger;
     }
 
-    [HttpPost("upload/batch")]
-    public async Task<IActionResult> UploadTestCasesBatch(
+    [HttpPost("upload")]
+    public async Task<IActionResult> UploadTestCases(
         [FromForm] string userId,
         [FromForm] string description,
         List<IFormFile> yamlFiles,
@@ -28,7 +28,7 @@ public class TestCaseController : ControllerBase
         if (yamlFiles == null || !yamlFiles.Any())
             return BadRequest("At least one YAML file is required");
 
-        var results = new List<TestCaseFileModel>();
+        var results = new List<TestCaseDefinition>();
 
         try
         {
@@ -40,12 +40,22 @@ public class TestCaseController : ControllerBase
                 if (yamlFile.Length == 0)
                     continue;
 
-                var testCase = new TestCaseFileModel
+                // Desserializa o YAML para TestCaseDefinition
+                TestCaseDefinition? testCase;
+                using (var reader = new StreamReader(yamlFile.OpenReadStream()))
                 {
-                    Name = Path.GetFileNameWithoutExtension(yamlFile.FileName),
-                    Description = $"{description} [{i + 1}/{yamlFiles.Count}]",
-                    UserId = userId
-                };
+                    var yamlContent = await reader.ReadToEndAsync();
+                    testCase = new YamlDotNet.Serialization.DeserializerBuilder()
+                        .IgnoreUnmatchedProperties()
+                        .Build()
+                        .Deserialize<TestCaseDefinition>(yamlContent);
+                }
+
+                if (testCase == null)
+                    continue;
+
+                // Preenche campos adicionais se necessário
+                testCase.Description ??= $"{description} [{i + 1}/{yamlFiles.Count}]";
 
                 var result = await _testService.SaveTestCaseAsync(
                     userId,
@@ -56,7 +66,7 @@ public class TestCaseController : ControllerBase
                 if (result != null) results.Add(result);
             }
 
-            return CreatedAtAction(nameof(GetTestCasesBatch), new { userId }, results);
+            return CreatedAtAction(nameof(GetTestCases), new { userId }, results);
         }
         catch (Exception ex)
         {
@@ -66,7 +76,7 @@ public class TestCaseController : ControllerBase
     }
 
     [HttpGet("{userId}")]
-    public async Task<IActionResult> GetTestCasesBatch(string userId)
+    public async Task<IActionResult> GetTestCases(string userId)
     {
         try
         {
@@ -80,49 +90,24 @@ public class TestCaseController : ControllerBase
         }
     }
 
-    [HttpGet("{userId}/{caseId}")]
-    public async Task<IActionResult> GetTestCase(string userId, string caseId)
+    [HttpPost("run/{userId}")]
+    public async Task<IActionResult> RunTestCases(string userId,
+        [FromBody] List<string> TestCaseIds)
     {
-        try
-        {
-            var testCase = await _testService.GetTestCaseAsync(userId, caseId);
-            if (testCase == null)
-                return NotFound();
-
-            return Ok(testCase);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving test case");
-            return StatusCode(500, "Internal server error");
-        }
-    }
-
-    [HttpPost("batch/run")]
-    public async Task<IActionResult> RunTestCasesBatch(
-    [FromBody] BatchRunRequest request)
-    {
-        if (request?.TestCaseIds == null || !request.TestCaseIds.Any())
-            return BadRequest("At least one test case ID is required");
+        if (TestCaseIds == null || !TestCaseIds.Any())
+            return BadRequest("Informe algum testcase.");
 
         try
         {
-            var results = new List<ValidationResultModel>();
+            var results = new List<OperationOutcome>();
 
-            foreach (var caseId in request.TestCaseIds)
+            foreach (var caseId in TestCaseIds)
             {
-                var result = await _testService.RunTestCaseAsync(request.UserId, caseId);
-                if(result != null) results.Add(result);
+                var result = await _testService.RunTestCaseAsync(userId, caseId);
+                if (result != null) results.Add(result);
             }
 
-            return Ok(new BatchRunResponse
-            {
-                UserId = request.UserId,
-                Results = results,
-                TotalCount = results.Count,
-                SuccessCount = results.Count(r => r.Status == "success"),
-                ErrorCount = results.Count(r => r.Status == "error")
-            });
+            return Ok(results);
         }
         catch (Exception ex)
         {
