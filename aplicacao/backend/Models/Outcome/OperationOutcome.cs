@@ -24,6 +24,7 @@
         public List<string>? Location { get; set; }
         public List<string>? Expression { get; set; }
         public List<Extension>? Extension { get; set; }
+        public CodeableConcept? Source { get; set; }
     }
 
     public class CodeableConcept
@@ -45,5 +46,8 @@
         public string? ValueString { get; set; }
         public int? ValueInteger { get; set; }
         public string? ValueCode { get; set; }
+        public bool? ValueBoolean { get; set; }
+        public decimal? ValueDecimal { get; set; }
+        public DateTime? ValueDateTime { get; set; }
     }
 }

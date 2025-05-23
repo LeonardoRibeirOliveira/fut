@@ -60,8 +60,6 @@ namespace FHIRUT.API.Services
                 $"-jar {_options.ValidatorPath}",
                 $"-version 4.0.1",
                 $"-output {tempOutput}",
-                $"-language pt-BR",
-                $"-showMessagesFromReferences",
                 instancePath
             };
 

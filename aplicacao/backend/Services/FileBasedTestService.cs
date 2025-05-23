@@ -1,5 +1,7 @@
 ﻿using System.IO.Abstractions;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Xml.Linq;
 using FHIRUT.API.Models.Outcome;
 using FHIRUT.API.Models.Tests;
 using FHIRUT.API.Services.Interfaces;
@@ -19,96 +21,39 @@ namespace FHIRUT.API.Services
             _validatorService = validatorService;
         }
 
-        public async Task<TestCaseDefinition?> SaveTestCaseAsync(string userId, TestCaseDefinition testCase, Stream yamlFile, Stream? jsonFile)
+        public async Task<OperationOutcome?> RunTestCaseAsync(string yamlContent, List<string> jsonContents)
         {
-            var userPath = Path.Combine(_baseDataPath, "users", userId);
-            var casePath = Path.Combine(userPath, "test-cases", testCase.TestId);
-
-            _fileSystem.Directory.CreateDirectory(casePath);
-
-            var yamlPath = Path.Combine(casePath, "test-case.yaml");
-            await using (var stream = _fileSystem.File.Create(yamlPath))
+            try
             {
-                await yamlFile.CopyToAsync(stream);
-            }
+                var profiles = ExtractProfilesFromYaml(yamlContent);
+                var outcomes = new List<OperationOutcome>();
 
-            if (testCase.GetType().GetProperty("YamlPath") != null)
-                testCase.GetType().GetProperty("YamlPath")?.SetValue(testCase, yamlPath);
-
-            if (jsonFile != null)
-            {
-                var jsonPath = Path.Combine(casePath, "instance.json");
-                await using (var stream = _fileSystem.File.Create(jsonPath))
+                foreach (var jsonContent in jsonContents)
                 {
-                    await jsonFile.CopyToAsync(stream);
-                }
+                    var tempJsonPath = Path.GetTempFileName();
+                    await _fileSystem.File.WriteAllTextAsync(tempJsonPath, jsonContent);
 
-                if (testCase.GetType().GetProperty("JsonPath") != null)
-                    testCase.GetType().GetProperty("JsonPath")?.SetValue(testCase, jsonPath);
-            }
+                    var operationOutcome = await _validatorService.ValidateAsync(
+                        tempJsonPath,
+                        profiles,
+                        null);
 
-            return testCase;
-        }
+                    var parsedOutcome = ParseOperationOutcome(operationOutcome);
 
-
-        public async Task<OperationOutcome?> RunTestCaseAsync(string userId, string caseId)
-        {
-            var casePath = Path.Combine(_baseDataPath, "users", userId, "test-cases", caseId);
-            var yamlPath = Path.Combine(casePath, "test-case.yaml");
-            var jsonPath = Path.Combine(casePath, "instance.json");
-
-            if (!_fileSystem.File.Exists(yamlPath) || !_fileSystem.File.Exists(jsonPath))
-                throw new FileNotFoundException("Test case files not found");
-
-            var yamlContent = await _fileSystem.File.ReadAllTextAsync(yamlPath);
-            var profiles = ExtractProfilesFromYaml(yamlContent);
-
-            var operationOutcomeJson = await _validatorService.ValidateAsync(
-                jsonPath,
-                profiles,
-                null);
-
-            return ParseOperationOutcome(operationOutcomeJson);
-        }
-
-        public async Task<IEnumerable<TestCaseDefinition>?> GetTestCasesAsync(string userId)
-        {
-            var userPath = Path.Combine(_baseDataPath, "users", userId, "test-cases");
-
-            if (!_fileSystem.Directory.Exists(userPath))
-                return Enumerable.Empty<TestCaseDefinition>();
-
-            var testCases = new List<TestCaseDefinition>();
-            var caseDirectories = _fileSystem.Directory.GetDirectories(userPath);
-
-            foreach (var caseDir in caseDirectories)
-            {
-                var yamlPath = Path.Combine(caseDir, "test-case.yaml");
-
-                if (_fileSystem.File.Exists(yamlPath))
-                {
-                    using var reader = _fileSystem.File.OpenText(yamlPath);
-                    var yamlContent = await reader.ReadToEndAsync();
-
-                    var deserializer = new YamlDotNet.Serialization.DeserializerBuilder()
-                        .IgnoreUnmatchedProperties()
-                        .Build();
-
-                    var testCase = deserializer.Deserialize<TestCaseDefinition>(yamlContent);
-
-                    // Opcional: preencher InstancePath se não estiver no YAML
-                    if (string.IsNullOrEmpty(testCase.InstancePath))
+                    if (parsedOutcome != null)
                     {
-                        var jsonPath = Path.Combine(caseDir, "instance.json");
-                        if (_fileSystem.File.Exists(jsonPath))
-                            testCase.InstancePath = jsonPath;
+                        outcomes.Add(parsedOutcome);
                     }
 
-                    testCases.Add(testCase);
+                    _fileSystem.File.Delete(tempJsonPath);
                 }
-            }
 
-            return testCases;
+                return CombineOperationOutcomes(outcomes);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error running test case", ex);
+            }
         }
 
 
@@ -140,19 +85,111 @@ namespace FHIRUT.API.Services
 
             var options = new JsonSerializerOptions
             {
-                PropertyNameCaseInsensitive = true
+                PropertyNameCaseInsensitive = true,
+                Converters = { new JsonStringEnumConverter() } // Para lidar com enums se houver
             };
 
             try
             {
-                var outcome = JsonSerializer.Deserialize<OperationOutcome>(operationOutcomeJson, options);
+                    var xmlDoc = XDocument.Parse(operationOutcomeJson);
+                    operationOutcomeJson = JsonSerializer.Serialize(xmlDoc);
+                    var outcome = JsonSerializer.Deserialize<OperationOutcome>(operationOutcomeJson, options);
+                
+
                 return outcome;
             }
-            catch
+            catch (Exception ex)
             {
-                // Se não conseguir desserializar, retorna nulo
+                return new OperationOutcome
+                {
+                    Issue = new List<OperationOutcomeIssue>
+                    {
+                        new OperationOutcomeIssue
+                        {
+                            Severity = "error",
+                            Code = "invalid-content",
+                            Diagnostics = $"Failed to parse OperationOutcome: {ex.Message}",
+                            Details = new CodeableConcept
+                            {
+                                Text = "Parsing error"
+                            }
+                        }
+                    }
+                };
+            }
+        }
+
+        private OperationOutcome CombineOperationOutcomes(List<OperationOutcome> outcomes)
+        {
+            if (outcomes == null || outcomes.Count == 0)
+            {
+                return new OperationOutcome();
+            }
+
+            // Se houver apenas um outcome, retorna ele mesmo
+            if (outcomes.Count == 1)
+            {
+                return outcomes[0];
+            }
+
+            var combinedOutcome = new OperationOutcome
+            {
+                ResourceType = "OperationOutcome",
+                // Mantém o ID do primeiro outcome ou gera um novo se necessário
+                Id = outcomes.FirstOrDefault(o => !string.IsNullOrEmpty(o.Id))?.Id,
+                // Combina os textos (se houver)
+                Text = CombineNarratives(outcomes.Select(o => o.Text).ToList()),
+                // Combina todas as issues
+                Issue = outcomes.SelectMany(o => o.Issue).ToList(),
+                // Combina as extensões únicas
+                Extension = CombineExtensions(outcomes.Select(o => o.Extension).ToList())
+            };
+
+            return combinedOutcome;
+        }
+
+        private Narrative? CombineNarratives(List<Narrative?> narratives)
+        {
+            // Filtra narratives não nulas
+            var validNarratives = narratives.Where(n => n != null).ToList();
+
+            if (validNarratives.Count == 0)
+            {
                 return null;
             }
+
+            // Se houver apenas uma narrative, retorna ela
+            if (validNarratives.Count == 1)
+            {
+                return validNarratives[0];
+            }
+
+            // Combina múltiplas narratives em uma
+            return new Narrative
+            {
+                Status = "generated",
+                Div = string.Join("<hr/>", validNarratives.Select(n => n?.Div))
+            };
+        }
+
+        private List<Extension>? CombineExtensions(List<List<Extension>?> extensionsLists)
+        {
+            // Filtra listas não nulas
+            var validExtensions = extensionsLists.Where(e => e != null).ToList();
+
+            if (validExtensions.Count == 0)
+            {
+                return null;
+            }
+
+            // Combina todas as extensões em uma única lista
+            var combined = validExtensions.SelectMany(e => e!).ToList();
+
+            // Remove duplicatas baseadas na URL
+            return combined
+                .GroupBy(e => e.Url)
+                .Select(g => g.First())
+                .ToList();
         }
     }
 }

@@ -18,92 +18,20 @@ public class TestCaseController : ControllerBase
         _logger = logger;
     }
 
-    [HttpPost("upload")]
-    public async Task<IActionResult> UploadTestCases(
-        [FromForm] string userId,
-        [FromForm] string description,
-        List<IFormFile> yamlFiles,
-        List<IFormFile>? jsonFiles = null)
+    [HttpPost("run")]
+    public async Task<IActionResult> RunTestCases(
+    [FromBody] List<TestCaseDefinition> testCaseRequests)
     {
-        if (yamlFiles == null || !yamlFiles.Any())
-            return BadRequest("At least one YAML file is required");
-
-        var results = new List<TestCaseDefinition>();
-
-        try
-        {
-            for (int i = 0; i < yamlFiles.Count; i++)
-            {
-                var yamlFile = yamlFiles[i];
-                var jsonFile = jsonFiles?.Count > i ? jsonFiles[i] : null;
-
-                if (yamlFile.Length == 0)
-                    continue;
-
-                // Desserializa o YAML para TestCaseDefinition
-                TestCaseDefinition? testCase;
-                using (var reader = new StreamReader(yamlFile.OpenReadStream()))
-                {
-                    var yamlContent = await reader.ReadToEndAsync();
-                    testCase = new YamlDotNet.Serialization.DeserializerBuilder()
-                        .IgnoreUnmatchedProperties()
-                        .Build()
-                        .Deserialize<TestCaseDefinition>(yamlContent);
-                }
-
-                if (testCase == null)
-                    continue;
-
-                // Preenche campos adicionais se necessário
-                testCase.Description ??= $"{description} [{i + 1}/{yamlFiles.Count}]";
-
-                var result = await _testService.SaveTestCaseAsync(
-                    userId,
-                    testCase,
-                    yamlFile.OpenReadStream(),
-                    jsonFile?.OpenReadStream());
-
-                if (result != null) results.Add(result);
-            }
-
-            return CreatedAtAction(nameof(GetTestCases), new { userId }, results);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error uploading batch test cases");
-            return StatusCode(500, "Internal server error");
-        }
-    }
-
-    [HttpGet("{userId}")]
-    public async Task<IActionResult> GetTestCases(string userId)
-    {
-        try
-        {
-            var testCases = await _testService.GetTestCasesAsync(userId);
-            return Ok(testCases);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving test cases");
-            return StatusCode(500, "Internal server error");
-        }
-    }
-
-    [HttpPost("run/{userId}")]
-    public async Task<IActionResult> RunTestCases(string userId,
-        [FromBody] List<string> TestCaseIds)
-    {
-        if (TestCaseIds == null || !TestCaseIds.Any())
-            return BadRequest("Informe algum testcase.");
+        if (testCaseRequests == null || !testCaseRequests.Any())
+            return BadRequest("Informe algum test case.");
 
         try
         {
             var results = new List<OperationOutcome>();
 
-            foreach (var caseId in TestCaseIds)
+            foreach (var request in testCaseRequests)
             {
-                var result = await _testService.RunTestCaseAsync(userId, caseId);
+                var result = await _testService.RunTestCaseAsync(request.YamlFile, request.JsonFiles);
                 if (result != null) results.Add(result);
             }
 

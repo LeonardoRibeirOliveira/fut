@@ -69,7 +69,6 @@ var dataOptions = app.Services.GetRequiredService<IOptions<ValidadorCliConfig>>(
 // Criar estrutura de pastas inicial
 var fileSystem = app.Services.GetRequiredService<IFileSystem>();
 fileSystem.Directory.CreateDirectory(Path.Combine(dataOptions.BasePath, "system"));
-fileSystem.Directory.CreateDirectory(Path.Combine(dataOptions.BasePath, "users"));
 
 // Verificar e baixar o validador se necessário (Nova seção)
 var validatorService = app.Services.GetRequiredService<IFHIRValidatorService>();
