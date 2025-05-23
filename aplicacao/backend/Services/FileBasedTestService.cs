@@ -57,25 +57,46 @@ namespace FHIRUT.API.Services
         private List<string> ExtractProfilesFromYaml(string yamlContent)
         {
             var profiles = new List<string>();
+            var lines = yamlContent.Split('\n');
 
-            if (yamlContent.Contains("profile:"))
+            bool inProfilesSection = false;
+            int baseIndentation = -1;
+
+            foreach (var rawLine in lines)
             {
-                var lines = yamlContent.Split('\n');
-                foreach (var line in lines)
+                var line = rawLine.TrimEnd();
+
+                if (line.TrimStart().StartsWith("profiles:"))
                 {
-                    if (line.Trim().StartsWith("profile:"))
+                    inProfilesSection = true;
+                    baseIndentation = rawLine.IndexOf("profiles:");
+                    continue;
+                }
+
+                if (inProfilesSection)
+                {
+                    int currentIndentation = rawLine.TakeWhile(Char.IsWhiteSpace).Count();
+
+                    if (currentIndentation <= baseIndentation || string.IsNullOrWhiteSpace(line))
                     {
-                        var profile = line.Split(':')[1].Trim().Trim('"').Trim('\'');
+                        inProfilesSection = false;
+                        continue;
+                    }
+
+                    if (line.TrimStart().StartsWith("-"))
+                    {
+                        var profile = line.TrimStart().Substring(1).Trim().Trim('"').Trim('\'');
                         if (!string.IsNullOrEmpty(profile))
                             profiles.Add(profile);
                     }
                 }
             }
 
-            return profiles.Any() ? profiles : new List<string> { "http://hl7.org/fhir/StructureDefinition/Patient" };
+            return profiles;
         }
 
-        public OperationOutcome? ParseOperationOutcome(string xml)
+
+        private OperationOutcome? ParseOperationOutcome(string xml)
         {
             var parser = new FhirXmlParser();
 

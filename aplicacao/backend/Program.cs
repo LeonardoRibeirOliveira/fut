@@ -20,8 +20,17 @@ builder.Services.AddSingleton<IFileSystem>(new FileSystem());
 // Configurar caminho base
 builder.Services.Configure<ValidadorCliConfig>(builder.Configuration.GetSection("Data"));
 
+builder.Services.AddSingleton<IFileSystem, FileSystem>();
 builder.Services.AddSingleton<IFHIRValidatorService, FHIRValidatorService>();
 builder.Services.AddSingleton<IFileBasedTestService, FileBasedTestService>();
+builder.Services.AddSingleton<FHIRConfigValidatorService>(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<FHIRConfigValidatorService>>();
+    var fileSystem = sp.GetRequiredService<IFileSystem>();
+    var options = sp.GetRequiredService<IOptions<ValidadorCliConfig>>().Value;
+
+    return new FHIRConfigValidatorService(logger, fileSystem, options);
+});
 
 // Configuração para uploads grandes
 builder.Services.Configure<FormOptions>(options =>
@@ -71,14 +80,7 @@ var fileSystem = app.Services.GetRequiredService<IFileSystem>();
 fileSystem.Directory.CreateDirectory(Path.Combine(dataOptions.BasePath, "system"));
 
 // Verificar e baixar o validador se necessário (Nova seção)
-var validatorService = app.Services.GetRequiredService<IFHIRValidatorService>();
-try
-{
-    await ((FHIRValidatorService)validatorService).EnsureValidatorExists();
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Erro ao verificar validador: {ex.Message}");
-}
+var validatorService = app.Services.GetRequiredService<FHIRConfigValidatorService>();
+await validatorService.EnsureValidatorExists();
 
 app.Run();

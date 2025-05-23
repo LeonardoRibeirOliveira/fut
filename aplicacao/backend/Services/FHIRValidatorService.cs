@@ -17,35 +17,6 @@ namespace FHIRUT.API.Services
             _fileSystem = fileSystem;
             _options = options.Value;
             _logger = logger;
-
-            EnsureValidatorExists().Wait();
-        }
-
-        public async Task EnsureValidatorExists()
-        {
-            if (!_fileSystem.File.Exists(_options.ValidatorPath))
-            {
-                try
-                {
-                    _logger.LogInformation("Downloading FHIR validator...");
-                    _fileSystem.Directory.CreateDirectory(Path.GetDirectoryName(_options.ValidatorPath)!);
-
-                    using var httpClient = new HttpClient();
-                    var response = await httpClient.GetAsync(_options.ValidatorDownloadUrl);
-                    response.EnsureSuccessStatusCode();
-
-                    await using var stream = await response.Content.ReadAsStreamAsync();
-                    await using var fileStream = _fileSystem.File.Create(_options.ValidatorPath);
-                    await stream.CopyToAsync(fileStream);
-
-                    _logger.LogInformation("Validator downloaded to {Path}", _options.ValidatorPath);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to download FHIR validator.");
-                    throw;
-                }
-            }
         }
 
         public async Task<string> ValidateAsync(string instancePath, List<string>? profiles = null, List<string>? igs = null)
