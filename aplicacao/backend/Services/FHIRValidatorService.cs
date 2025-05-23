@@ -3,7 +3,6 @@ using FHIRUT.API.Services.Interfaces;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.IO.Abstractions;
-using System.Text.Json;
 
 namespace FHIRUT.API.Services
 {

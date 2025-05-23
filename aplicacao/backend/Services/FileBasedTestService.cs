@@ -1,10 +1,7 @@
 ﻿using System.IO.Abstractions;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Xml.Linq;
-using FHIRUT.API.Models.Outcome;
-using FHIRUT.API.Models.Tests;
 using FHIRUT.API.Services.Interfaces;
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Serialization;
 
 namespace FHIRUT.API.Services
 {
@@ -21,7 +18,7 @@ namespace FHIRUT.API.Services
             _validatorService = validatorService;
         }
 
-        public async Task<OperationOutcome?> RunTestCaseAsync(string yamlContent, List<string> jsonContents)
+        public async Task<List<OperationOutcome>?> RunTestCaseAsync(string yamlContent, List<string> jsonContents)
         {
             try
             {
@@ -33,12 +30,12 @@ namespace FHIRUT.API.Services
                     var tempJsonPath = Path.GetTempFileName();
                     await _fileSystem.File.WriteAllTextAsync(tempJsonPath, jsonContent);
 
-                    var operationOutcome = await _validatorService.ValidateAsync(
+                    var xmlOutcome = await _validatorService.ValidateAsync(
                         tempJsonPath,
                         profiles,
                         null);
 
-                    var parsedOutcome = ParseOperationOutcome(operationOutcome);
+                    var parsedOutcome = ParseOperationOutcome(xmlOutcome);
 
                     if (parsedOutcome != null)
                     {
@@ -48,7 +45,7 @@ namespace FHIRUT.API.Services
                     _fileSystem.File.Delete(tempJsonPath);
                 }
 
-                return CombineOperationOutcomes(outcomes);
+                return outcomes;
             }
             catch (Exception ex)
             {
@@ -78,118 +75,20 @@ namespace FHIRUT.API.Services
             return profiles.Any() ? profiles : new List<string> { "http://hl7.org/fhir/StructureDefinition/Patient" };
         }
 
-        private OperationOutcome? ParseOperationOutcome(string operationOutcomeJson)
+        public OperationOutcome? ParseOperationOutcome(string xml)
         {
-            if (string.IsNullOrWhiteSpace(operationOutcomeJson))
-                return null;
-
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                Converters = { new JsonStringEnumConverter() } // Para lidar com enums se houver
-            };
+            var parser = new FhirXmlParser();
 
             try
             {
-                    var xmlDoc = XDocument.Parse(operationOutcomeJson);
-                    operationOutcomeJson = JsonSerializer.Serialize(xmlDoc);
-                    var outcome = JsonSerializer.Deserialize<OperationOutcome>(operationOutcomeJson, options);
-                
-
-                return outcome;
+                var parsed = parser.Parse<OperationOutcome>(xml);
+                return parsed;
             }
-            catch (Exception ex)
+            catch (FormatException ex)
             {
-                return new OperationOutcome
-                {
-                    Issue = new List<OperationOutcomeIssue>
-                    {
-                        new OperationOutcomeIssue
-                        {
-                            Severity = "error",
-                            Code = "invalid-content",
-                            Diagnostics = $"Failed to parse OperationOutcome: {ex.Message}",
-                            Details = new CodeableConcept
-                            {
-                                Text = "Parsing error"
-                            }
-                        }
-                    }
-                };
-            }
-        }
-
-        private OperationOutcome CombineOperationOutcomes(List<OperationOutcome> outcomes)
-        {
-            if (outcomes == null || outcomes.Count == 0)
-            {
-                return new OperationOutcome();
-            }
-
-            // Se houver apenas um outcome, retorna ele mesmo
-            if (outcomes.Count == 1)
-            {
-                return outcomes[0];
-            }
-
-            var combinedOutcome = new OperationOutcome
-            {
-                ResourceType = "OperationOutcome",
-                // Mantém o ID do primeiro outcome ou gera um novo se necessário
-                Id = outcomes.FirstOrDefault(o => !string.IsNullOrEmpty(o.Id))?.Id,
-                // Combina os textos (se houver)
-                Text = CombineNarratives(outcomes.Select(o => o.Text).ToList()),
-                // Combina todas as issues
-                Issue = outcomes.SelectMany(o => o.Issue).ToList(),
-                // Combina as extensões únicas
-                Extension = CombineExtensions(outcomes.Select(o => o.Extension).ToList())
-            };
-
-            return combinedOutcome;
-        }
-
-        private Narrative? CombineNarratives(List<Narrative?> narratives)
-        {
-            // Filtra narratives não nulas
-            var validNarratives = narratives.Where(n => n != null).ToList();
-
-            if (validNarratives.Count == 0)
-            {
+                Console.WriteLine($"Erro ao fazer parse do OperationOutcome: {ex.Message}");
                 return null;
             }
-
-            // Se houver apenas uma narrative, retorna ela
-            if (validNarratives.Count == 1)
-            {
-                return validNarratives[0];
-            }
-
-            // Combina múltiplas narratives em uma
-            return new Narrative
-            {
-                Status = "generated",
-                Div = string.Join("<hr/>", validNarratives.Select(n => n?.Div))
-            };
-        }
-
-        private List<Extension>? CombineExtensions(List<List<Extension>?> extensionsLists)
-        {
-            // Filtra listas não nulas
-            var validExtensions = extensionsLists.Where(e => e != null).ToList();
-
-            if (validExtensions.Count == 0)
-            {
-                return null;
-            }
-
-            // Combina todas as extensões em uma única lista
-            var combined = validExtensions.SelectMany(e => e!).ToList();
-
-            // Remove duplicatas baseadas na URL
-            return combined
-                .GroupBy(e => e.Url)
-                .Select(g => g.First())
-                .ToList();
         }
     }
 }

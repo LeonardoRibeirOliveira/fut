@@ -1,6 +1,6 @@
-﻿using FHIRUT.API.Models.Outcome;
-using FHIRUT.API.Models.Tests;
+﻿using FHIRUT.API.Models.Tests;
 using FHIRUT.API.Services.Interfaces;
+using Hl7.Fhir.Model;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FHIRUT.API.Controllers;
@@ -27,7 +27,7 @@ public class TestCaseController : ControllerBase
 
         try
         {
-            var results = new List<OperationOutcome>();
+            var results = new List<List<OperationOutcome>?>();
 
             foreach (var request in testCaseRequests)
             {
