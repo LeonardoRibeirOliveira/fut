@@ -1,0 +1,162 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### IntelliJ IDEA ###
+.idea/modules.xml
+.idea/jarRepositories.xml
+.idea/compiler.xml
+.idea/libraries/
+*.iws
+*.iml
+*.ipr
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
+
+# Backend .NET
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/*.user
+**/*.suo
+**/launchSettings.json
+
+# Frontend Angular
+/node_modules/
+/dist/
+/.angular/cache
+
+# Dados da aplicação (não versionados)
+/fhirut-data/                   # Pasta principal de dados
+!fhirut-data/system/            # Exceto a pasta system (se necessário)
+fhirut-data/system/validator_cli.jar # O validador será baixado automaticamente
+
+# Binários do validador FHIR (alternativo)
+lib/validator_cli.jar           # Cópia local do validador
+validator_cli                # Deve ser baixado separadamente
+/aplicacao/backend/fhirut-data/system/validator_cli.jar
+
+# Ambiente e IDE
+.DS_Store
+*.swp
+*.swo
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.idea/
+
+# Configurações locais
+.env
+*.local
+appsettings.Development.json
+
+# Arquivos de usuário temporários
+*.tmp
+*.temp
+
+# Editor/IDE específico
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Lock files (evita conflitos)
+package-lock.json
+yarn.lock
+
+### Angular ###
+# Dependências
+/node_modules/
+/.angular/cache
+
+# Artefatos de build
+/dist/
+/tmp/
+/out-tsc/
+
+# Cache do navegador
+/.history/
+/.sass-cache/
+
+# Arquivos de ambiente local
+/src/environments/environment.local.ts
+*.env
+
+### Tailwind ###
+/tailwind-debug.log
+/.postcssrc
+
+### .NET Backend ###
+**/bin/
+**/obj/
+**/.vs/
+**/launchSettings.json
+
+### IDE ###
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Eclipse
+.settings/
+.metadata/
+
+### Sistema ###
+.DS_Store
+Thumbs.db
+
+### Logs ###
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+### Arquivos temporários ###
+*.tmp
+*.temp
+*~
+*.swp
+*.swo
+
+### FHIRUT Específico ###
+/fhirut-data/
+/lib/validator_cli.jar
+/backend/wwwroot/test-cases/
+

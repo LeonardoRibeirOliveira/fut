@@ -1,0 +1,14 @@
+test_id: Patient-001
+description: Validação básica contra perfil de indivíduo do SES-GO
+context:
+  igs:
+    - br.go.ses.core#0.0.1
+    - br.ufg.cgis.rnds-lite#0.2.4
+  profiles:
+    - http://fhir.saude.go.gov.br/r4/core/StructureDefinition/individuo
+instance_path: src/test/resources/instances/patient_example.json
+expected_results:
+  status: success
+  errors: []
+  warnings:
+    - "dom-6" # Aviso esperado sobre narrative
