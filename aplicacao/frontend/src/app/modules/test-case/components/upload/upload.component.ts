@@ -4,7 +4,7 @@ import { UploadResponse } from '../../models/test-case.models';
 
 @Component({
   selector: 'app-test-case-upload',
-  templateUrl: './upload.component.html'
+  templateUrl: './upload.component.html',
 })
 export class TestCaseUploadComponent {
   userId = '';
@@ -25,7 +25,12 @@ export class TestCaseUploadComponent {
 
   uploadFiles(): void {
     this.testCaseService
-      .uploadTestCasesBatch(this.userId, this.description, this.yamlFiles, this.jsonFiles)
+      .uploadTestCasesBatch(
+        this.userId,
+        this.description,
+        this.yamlFiles,
+        this.jsonFiles,
+      )
       .subscribe({
         next: (response) => {
           this.uploadResponse = response;
@@ -33,9 +38,9 @@ export class TestCaseUploadComponent {
         error: (err) => {
           this.uploadResponse = {
             success: false,
-            message: err.error.message || 'Upload failed'
+            message: err.error.message || 'Upload failed',
           };
-        }
+        },
       });
   }
 }

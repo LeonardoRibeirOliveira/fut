@@ -7,12 +7,7 @@ import { TestCaseService } from './services/test-case.service';
   declarations: [
     // Seus componentes aqui
   ],
-  imports: [
-    CommonModule,
-    HttpClientModule
-  ],
-  providers: [
-    TestCaseService
-  ]
+  imports: [CommonModule, HttpClientModule],
+  providers: [TestCaseService],
 })
-export class TestCaseModule { }
+export class TestCaseModule {}

@@ -8,33 +8,36 @@ import {
   BatchRunRequest,
   BatchRunResponse,
   UploadResponse,
-  TestCaseListResponse
+  TestCaseListResponse,
 } from '../models/test-case.models';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class TestCaseService {
   private readonly apiUrl = `${environment.apiUrl}/api/testcase`;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   uploadTestCasesBatch(
     userId: string,
     description: string,
     yamlFiles: File[],
-    jsonFiles?: File[]
+    jsonFiles?: File[],
   ): Observable<UploadResponse> {
     const formData = new FormData();
     formData.append('userId', userId);
     formData.append('description', description);
 
-    yamlFiles.forEach(file => formData.append('yamlFiles', file));
+    yamlFiles.forEach((file) => formData.append('yamlFiles', file));
     if (jsonFiles) {
-      jsonFiles.forEach(file => formData.append('jsonFiles', file));
+      jsonFiles.forEach((file) => formData.append('jsonFiles', file));
     }
 
-    return this.http.post<UploadResponse>(`${this.apiUrl}/upload/batch`, formData);
+    return this.http.post<UploadResponse>(
+      `${this.apiUrl}/upload/batch`,
+      formData,
+    );
   }
 
   getTestCasesBatch(userId: string): Observable<TestCaseListResponse> {
@@ -42,10 +45,15 @@ export class TestCaseService {
   }
 
   getTestCase(userId: string, caseId: string): Observable<TestCaseFileModel> {
-    return this.http.get<TestCaseFileModel>(`${this.apiUrl}/${userId}/${caseId}`);
+    return this.http.get<TestCaseFileModel>(
+      `${this.apiUrl}/${userId}/${caseId}`,
+    );
   }
 
   runTestCasesBatch(request: BatchRunRequest): Observable<BatchRunResponse> {
-    return this.http.post<BatchRunResponse>(`${this.apiUrl}/batch/run`, request);
+    return this.http.post<BatchRunResponse>(
+      `${this.apiUrl}/batch/run`,
+      request,
+    );
   }
 }
