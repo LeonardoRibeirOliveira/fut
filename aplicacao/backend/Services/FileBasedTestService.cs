@@ -1,4 +1,6 @@
 ﻿using System.IO.Abstractions;
+using FHIRUT.API.Models.Result;
+using FHIRUT.API.Models.Tests;
 using FHIRUT.API.Services.Interfaces;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
@@ -9,42 +11,60 @@ namespace FHIRUT.API.Services
     {
         private readonly IFHIRValidatorService _validatorService;
         private readonly IFileSystem _fileSystem;
+        private readonly ICompareTestService _compareTestService;
         private readonly string _baseDataPath;
 
-        public FileBasedTestService(IFileSystem fileSystem, IConfiguration config, IFHIRValidatorService validatorService)
+        public FileBasedTestService(IFileSystem fileSystem, IConfiguration config, IFHIRValidatorService validatorService, ICompareTestService compareTestService)
         {
             _fileSystem = fileSystem;
             _baseDataPath = config["Data:BasePath"] ?? "fhirut-data";
             _validatorService = validatorService;
+            _compareTestService = compareTestService;
         }
 
-        public async Task<List<OperationOutcome>?> RunTestCaseAsync(string yamlFilePath)
+        public async Task<List<TestCaseResult>?> RunTestCaseAsync(List<TestCaseDefinition> testCaseRequests)
         {
             try
             {
-                if (!_fileSystem.File.Exists(yamlFilePath))
-                    throw new FileNotFoundException("YAML file not found", yamlFilePath);
-
-                var yamlContent = await _fileSystem.File.ReadAllTextAsync(yamlFilePath);
-
-
-                var profiles = ExtractProfilesFromYaml(yamlContent);
-                var jsonPaths = ExtractInstancePathsFromYaml(yamlContent);
-
-                var validationTasks = jsonPaths.Select(async path =>
+                var testTasks = testCaseRequests.SelectMany(request =>
                 {
-                    var xmlOutcome = await _validatorService.ValidateAsync(path, profiles, null);
-                    return ParseOperationOutcome(xmlOutcome);
+                    if (!_fileSystem.File.Exists(request.YamlFilePath))
+                        throw new FileNotFoundException("YAML file not found", request.YamlFilePath);
+
+                    var yamlContentTask = _fileSystem.File.ReadAllTextAsync(request.YamlFilePath);
+
+                    return System.Threading.Tasks.Task.Run(async () =>
+                    {
+                        var yamlContent = await yamlContentTask;
+                        var profiles = ExtractProfilesFromYaml(yamlContent);
+                        var jsonPaths = ExtractInstancePathsFromYaml(yamlContent);
+
+                        var resultTasks = jsonPaths.Select(async jsonPath =>
+                        {
+                            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+                            var xmlOutcome = await _validatorService.ValidateAsync(jsonPath, profiles, null);
+                            var outcome = ParseOperationOutcome(xmlOutcome);
+
+                            stopwatch.Stop();
+
+                            return GenerateComparedResults(request, outcome, stopwatch.Elapsed);
+                        });
+
+                        var results = await System.Threading.Tasks.Task.WhenAll(resultTasks);
+                        return results.SelectMany(r => r);
+                    });
                 });
 
-                var outcomes = await System.Threading.Tasks.Task.WhenAll(validationTasks);
-                return outcomes.Where(o => o != null).ToList()!;
+                var allResultGroups = await System.Threading.Tasks.Task.WhenAll(testTasks);
+                return allResultGroups.SelectMany(r => r).ToList();
             }
             catch (Exception ex)
             {
                 throw new Exception("Error running test case", ex);
             }
         }
+
 
 
         private List<string> ExtractInstancePathsFromYaml(string yamlContent)
@@ -101,8 +121,6 @@ namespace FHIRUT.API.Services
             return instancePaths;
         }
 
-
-
         private List<string> ExtractProfilesFromYaml(string yamlContent)
         {
             var profiles = new List<string>();
@@ -143,7 +161,6 @@ namespace FHIRUT.API.Services
 
             return profiles;
         }
-
 
         private OperationOutcome? ParseOperationOutcome(string xml)
         {
