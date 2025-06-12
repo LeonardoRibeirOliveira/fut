@@ -18,40 +18,89 @@ namespace FHIRUT.API.Services
             _validatorService = validatorService;
         }
 
-        public async Task<List<OperationOutcome>?> RunTestCaseAsync(string yamlContent, List<string> jsonContents)
+        public async Task<List<OperationOutcome>?> RunTestCaseAsync(string yamlFilePath)
         {
             try
             {
+                if (!_fileSystem.File.Exists(yamlFilePath))
+                    throw new FileNotFoundException("YAML file not found", yamlFilePath);
+
+                var yamlContent = await _fileSystem.File.ReadAllTextAsync(yamlFilePath);
+
+
                 var profiles = ExtractProfilesFromYaml(yamlContent);
-                var outcomes = new List<OperationOutcome>();
+                var jsonPaths = ExtractInstancePathsFromYaml(yamlContent);
 
-                foreach (var jsonContent in jsonContents)
+                var validationTasks = jsonPaths.Select(async path =>
                 {
-                    var tempJsonPath = Path.GetTempFileName();
-                    await _fileSystem.File.WriteAllTextAsync(tempJsonPath, jsonContent);
+                    var xmlOutcome = await _validatorService.ValidateAsync(path, profiles, null);
+                    return ParseOperationOutcome(xmlOutcome);
+                });
 
-                    var xmlOutcome = await _validatorService.ValidateAsync(
-                        tempJsonPath,
-                        profiles,
-                        null);
-
-                    var parsedOutcome = ParseOperationOutcome(xmlOutcome);
-
-                    if (parsedOutcome != null)
-                    {
-                        outcomes.Add(parsedOutcome);
-                    }
-
-                    _fileSystem.File.Delete(tempJsonPath);
-                }
-
-                return outcomes;
+                var outcomes = await System.Threading.Tasks.Task.WhenAll(validationTasks);
+                return outcomes.Where(o => o != null).ToList()!;
             }
             catch (Exception ex)
             {
                 throw new Exception("Error running test case", ex);
             }
         }
+
+
+        private List<string> ExtractInstancePathsFromYaml(string yamlContent)
+        {
+            var instancePaths = new List<string>();
+            var lines = yamlContent.Split('\n');
+
+            bool inInstanceSection = false;
+            int baseIndentation = -1;
+
+            foreach (var rawLine in lines)
+            {
+                var line = rawLine.TrimEnd();
+
+                if (line.TrimStart().StartsWith("instance_path:"))
+                {
+                    inInstanceSection = true;
+                    baseIndentation = rawLine.IndexOf("instance_path:");
+                    var index = line.IndexOf('[');
+                    if (index >= 0)
+                    {
+                        var inlineValues = line.Substring(index)
+                            .Trim('[', ']')
+                            .Split(',')
+                            .Select(x => x.Trim().Trim('"', '\''))
+                            .Where(x => !string.IsNullOrEmpty(x));
+
+                        instancePaths.AddRange(inlineValues);
+                        inInstanceSection = false;
+                    }
+
+                    continue;
+                }
+
+                if (inInstanceSection)
+                {
+                    int currentIndentation = rawLine.TakeWhile(Char.IsWhiteSpace).Count();
+
+                    if (currentIndentation <= baseIndentation || string.IsNullOrWhiteSpace(line))
+                    {
+                        inInstanceSection = false;
+                        continue;
+                    }
+
+                    if (line.TrimStart().StartsWith("-"))
+                    {
+                        var path = line.TrimStart().Substring(1).Trim().Trim('"').Trim('\'');
+                        if (!string.IsNullOrEmpty(path))
+                            instancePaths.Add(path);
+                    }
+                }
+            }
+
+            return instancePaths;
+        }
+
 
 
         private List<string> ExtractProfilesFromYaml(string yamlContent)
