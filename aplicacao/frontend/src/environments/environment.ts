@@ -1,4 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:5000',
+  // A porta aqui (ex: 53648) deve ser a mesma do seu backend C#
+  apiUrl: 'https://localhost:53647',
 };

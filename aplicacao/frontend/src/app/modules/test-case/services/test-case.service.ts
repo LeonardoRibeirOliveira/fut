@@ -1,59 +1,28 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpEvent, HttpRequest } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import {
-  TestCaseFileModel,
-  ValidationResultModel,
-  BatchRunRequest,
-  BatchRunResponse,
-  UploadResponse,
-  TestCaseListResponse,
-} from '../models/test-case.models';
+import { TestCaseDefinition } from '../models/test-case.request.model';
+import { OperationOutcome } from '../models/operation-outcome.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TestCaseService {
-  private readonly apiUrl = `${environment.apiUrl}/api/testcase`;
+  // A URL da API é configurada no arquivo environment.ts
+  // Certifique-se de que a porta corresponde à do seu backend (ex: http://localhost:53648)
+  private readonly apiUrl = `${environment.apiUrl}/api/TestCase`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
-  uploadTestCasesBatch(
-    userId: string,
-    description: string,
-    yamlFiles: File[],
-    jsonFiles?: File[],
-  ): Observable<UploadResponse> {
-    const formData = new FormData();
-    formData.append('userId', userId);
-    formData.append('description', description);
-
-    yamlFiles.forEach((file) => formData.append('yamlFiles', file));
-    if (jsonFiles) {
-      jsonFiles.forEach((file) => formData.append('jsonFiles', file));
-    }
-
-    return this.http.post<UploadResponse>(
-      `${this.apiUrl}/upload/batch`,
-      formData,
-    );
-  }
-
-  getTestCasesBatch(userId: string): Observable<TestCaseListResponse> {
-    return this.http.get<TestCaseListResponse>(`${this.apiUrl}/${userId}`);
-  }
-
-  getTestCase(userId: string, caseId: string): Observable<TestCaseFileModel> {
-    return this.http.get<TestCaseFileModel>(
-      `${this.apiUrl}/${userId}/${caseId}`,
-    );
-  }
-
-  runTestCasesBatch(request: BatchRunRequest): Observable<BatchRunResponse> {
-    return this.http.post<BatchRunResponse>(
-      `${this.apiUrl}/batch/run`,
-      request,
-    );
+  /**
+   * Executa um ou mais casos de teste no backend.
+   * @param testCases - Um array de definições de casos de teste, cada um com o conteúdo do YAML e dos JSONs.
+   * @returns Um Observable com os resultados da validação (um array de OperationOutcome).
+   */
+  runTestCases(
+    testCases: TestCaseDefinition[],
+  ): Observable<OperationOutcome[][]> {
+    return this.http.post<OperationOutcome[][]>(`${this.apiUrl}/run`, testCases);
   }
 }
