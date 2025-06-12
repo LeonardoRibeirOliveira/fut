@@ -9,7 +9,7 @@ namespace FHIRUT.API.Models.Result
         public string ExpectedStatus { get; set; } = "";
         public string ActualStatus { get; set; } = "";
         public List<IssueSummary> Issues { get; set; } = new();
-        public double ExecutionTime { get; set; }
+        public TimeSpan ExecutionTime { get; set; }
 
         public OperationOutcome? OperationOutcome { get; set; }
     }
