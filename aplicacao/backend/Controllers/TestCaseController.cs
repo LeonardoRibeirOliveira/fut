@@ -1,4 +1,6 @@
-﻿using FHIRUT.API.Models.Tests;
+﻿using System.Text;
+using FHIRUT.API.Models.Result;
+using FHIRUT.API.Models.Tests;
 using FHIRUT.API.Services.Interfaces;
 using Hl7.Fhir.Model;
 using Microsoft.AspNetCore.Mvc;
@@ -19,23 +21,16 @@ public class TestCaseController : ControllerBase
     }
 
     [HttpPost("run")]
-    public async Task<IActionResult> RunTestCases(
-    [FromBody] List<TestCaseDefinition> testCaseRequests)
+    public async Task<IActionResult> RunTestCases([FromBody] List<TestCaseDefinition> testCaseRequests)
     {
         if (testCaseRequests == null || !testCaseRequests.Any())
             return BadRequest("Informe algum test case.");
 
         try
         {
-            var results = new List<List<OperationOutcome>?>();
+            var result = await _testService.RunTestCaseAsync(testCaseRequests);
 
-            foreach (var request in testCaseRequests)
-            {
-                var result = await _testService.RunTestCaseAsync(request.YamlFile);
-                if (result != null) results.Add(result);
-            }
-
-            return Ok(results);
+            return Ok(result);
         }
         catch (Exception ex)
         {
@@ -43,4 +38,5 @@ public class TestCaseController : ControllerBase
             return StatusCode(500, "Internal server error");
         }
     }
+
 }
