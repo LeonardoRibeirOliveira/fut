@@ -25,9 +25,10 @@ namespace FHIRUT.API.Services
             var yamlContent = await _fileSystem.File.ReadAllTextAsync(yamlFilePath);
 
             var deserializer = new DeserializerBuilder()
-                .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .WithNamingConvention(UnderscoredNamingConvention.Instance)
                 .IgnoreUnmatchedProperties()
                 .Build();
+
 
             var testCase = deserializer.Deserialize<YamlTestCaseDefinition>(yamlContent);
 
