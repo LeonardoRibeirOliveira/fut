@@ -14,7 +14,7 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configuração do File Provider
+// Configuraï¿½ï¿½o do File Provider
 builder.Services.AddSingleton<IFileSystem>(new FileSystem());
 
 // Configurar caminho base
@@ -32,7 +32,7 @@ builder.Services.AddSingleton<FHIRConfigValidatorService>(sp =>
     return new FHIRConfigValidatorService(logger, fileSystem, options);
 });
 
-// Configuração para uploads grandes
+// Configuraï¿½ï¿½o para uploads grandes
 builder.Services.Configure<FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = 52428800; // 50MB
@@ -72,14 +72,14 @@ app.UseCors("Angular");
 app.UseAuthorization();
 app.MapControllers();
 
-// Obter configurações
+// Obter configuraï¿½ï¿½es
 var dataOptions = app.Services.GetRequiredService<IOptions<ValidadorCliConfig>>().Value;
 
 // Criar estrutura de pastas inicial
 var fileSystem = app.Services.GetRequiredService<IFileSystem>();
 fileSystem.Directory.CreateDirectory(Path.Combine(dataOptions.BasePath, "system"));
 
-// Verificar e baixar o validador se necessário (Nova seção)
+// Verificar e baixar o validador se necessï¿½rio (Nova seï¿½ï¿½o)
 var validatorService = app.Services.GetRequiredService<FHIRConfigValidatorService>();
 await validatorService.EnsureValidatorExists();
 
