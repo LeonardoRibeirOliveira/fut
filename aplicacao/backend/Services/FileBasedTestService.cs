@@ -12,48 +12,42 @@ namespace FHIRUT.API.Services
         private readonly IFHIRValidatorService _validatorService;
         private readonly IFileSystem _fileSystem;
         private readonly ICompareTestService _compareTestService;
+        private readonly IYamlCaseMapperService _yamlCaseMapperService;
         private readonly string _baseDataPath;
 
-        public FileBasedTestService(IFileSystem fileSystem, IConfiguration config, IFHIRValidatorService validatorService, ICompareTestService compareTestService)
+        public FileBasedTestService(IFileSystem fileSystem, IConfiguration config, IFHIRValidatorService validatorService, ICompareTestService compareTestService, IYamlCaseMapperService yamlCaseMapperService)
         {
             _fileSystem = fileSystem;
             _baseDataPath = config["Data:BasePath"] ?? "fhirut-data";
             _validatorService = validatorService;
             _compareTestService = compareTestService;
+            _yamlCaseMapperService = yamlCaseMapperService;
         }
 
         public async Task<List<TestCaseResult>?> RunTestCaseAsync(List<TestCaseDefinition> testCaseRequests)
         {
             try
             {
-                var testTasks = testCaseRequests.SelectMany(request =>
+                var testTasks = testCaseRequests.Select(async request =>
                 {
-                    if (!_fileSystem.File.Exists(request.YamlFilePath))
-                        throw new FileNotFoundException("YAML file not found", request.YamlFilePath);
+                    var testCaseDefinition = await _yamlCaseMapperService.LoadTestCaseAsync(request.YamlFilePath);
 
-                    var yamlContentTask = _fileSystem.File.ReadAllTextAsync(request.YamlFilePath);
-
-                    return System.Threading.Tasks.Task.Run(async () =>
+                    var resultTasks = testCaseDefinition.InstancePath.Select(async jsonPath =>
                     {
-                        var yamlContent = await yamlContentTask;
-                        var profiles = ExtractProfilesFromYaml(yamlContent);
-                        var jsonPaths = ExtractInstancePathsFromYaml(yamlContent);
+                        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                        var xmlOutcome = await _validatorService.ValidateAsync(
+                            jsonPath,
+                            testCaseDefinition.Context.Profiles,
+                            null);
 
-                        var resultTasks = jsonPaths.Select(async jsonPath =>
-                        {
-                            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                        var outcome = ParseOperationOutcome(xmlOutcome);
+                        stopwatch.Stop();
 
-                            var xmlOutcome = await _validatorService.ValidateAsync(jsonPath, profiles, null);
-                            var outcome = ParseOperationOutcome(xmlOutcome);
-
-                            stopwatch.Stop();
-
-                            return GenerateComparedResults(request, outcome, stopwatch.Elapsed);
-                        });
-
-                        var results = await System.Threading.Tasks.Task.WhenAll(resultTasks);
-                        return results.SelectMany(r => r);
+                        return _compareTestService.GenerateComparedResults(testCaseDefinition, outcome, stopwatch.Elapsed, request.YamlFilePath);
                     });
+
+                    var results = await System.Threading.Tasks.Task.WhenAll(resultTasks);
+                    return results.SelectMany(r => r).ToList();
                 });
 
                 var allResultGroups = await System.Threading.Tasks.Task.WhenAll(testTasks);
@@ -67,102 +61,8 @@ namespace FHIRUT.API.Services
 
 
 
-        private List<string> ExtractInstancePathsFromYaml(string yamlContent)
-        {
-            var instancePaths = new List<string>();
-            var lines = yamlContent.Split('\n');
 
-            bool inInstanceSection = false;
-            int baseIndentation = -1;
-
-            foreach (var rawLine in lines)
-            {
-                var line = rawLine.TrimEnd();
-
-                if (line.TrimStart().StartsWith("instance_path:"))
-                {
-                    inInstanceSection = true;
-                    baseIndentation = rawLine.IndexOf("instance_path:");
-                    var index = line.IndexOf('[');
-                    if (index >= 0)
-                    {
-                        var inlineValues = line.Substring(index)
-                            .Trim('[', ']')
-                            .Split(',')
-                            .Select(x => x.Trim().Trim('"', '\''))
-                            .Where(x => !string.IsNullOrEmpty(x));
-
-                        instancePaths.AddRange(inlineValues);
-                        inInstanceSection = false;
-                    }
-
-                    continue;
-                }
-
-                if (inInstanceSection)
-                {
-                    int currentIndentation = rawLine.TakeWhile(Char.IsWhiteSpace).Count();
-
-                    if (currentIndentation <= baseIndentation || string.IsNullOrWhiteSpace(line))
-                    {
-                        inInstanceSection = false;
-                        continue;
-                    }
-
-                    if (line.TrimStart().StartsWith("-"))
-                    {
-                        var path = line.TrimStart().Substring(1).Trim().Trim('"').Trim('\'');
-                        if (!string.IsNullOrEmpty(path))
-                            instancePaths.Add(path);
-                    }
-                }
-            }
-
-            return instancePaths;
-        }
-
-        private List<string> ExtractProfilesFromYaml(string yamlContent)
-        {
-            var profiles = new List<string>();
-            var lines = yamlContent.Split('\n');
-
-            bool inProfilesSection = false;
-            int baseIndentation = -1;
-
-            foreach (var rawLine in lines)
-            {
-                var line = rawLine.TrimEnd();
-
-                if (line.TrimStart().StartsWith("profiles:"))
-                {
-                    inProfilesSection = true;
-                    baseIndentation = rawLine.IndexOf("profiles:");
-                    continue;
-                }
-
-                if (inProfilesSection)
-                {
-                    int currentIndentation = rawLine.TakeWhile(Char.IsWhiteSpace).Count();
-
-                    if (currentIndentation <= baseIndentation || string.IsNullOrWhiteSpace(line))
-                    {
-                        inProfilesSection = false;
-                        continue;
-                    }
-
-                    if (line.TrimStart().StartsWith("-"))
-                    {
-                        var profile = line.TrimStart().Substring(1).Trim().Trim('"').Trim('\'');
-                        if (!string.IsNullOrEmpty(profile))
-                            profiles.Add(profile);
-                    }
-                }
-            }
-
-            return profiles;
-        }
-
-        private OperationOutcome? ParseOperationOutcome(string xml)
+        private OperationOutcome ParseOperationOutcome(string xml)
         {
             var parser = new FhirXmlParser();
 
@@ -174,7 +74,7 @@ namespace FHIRUT.API.Services
             catch (FormatException ex)
             {
                 Console.WriteLine($"Erro ao fazer parse do OperationOutcome: {ex.Message}");
-                return null;
+                return new OperationOutcome();
             }
         }
     }

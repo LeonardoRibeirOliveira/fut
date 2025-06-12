@@ -1,4 +1,5 @@
-﻿using FHIRUT.API.Models.Result;
+﻿using FHIRUT.API.Models.Input;
+using FHIRUT.API.Models.Result;
 using FHIRUT.API.Models.Tests;
 using FHIRUT.API.Services.Interfaces;
 using Hl7.Fhir.Model;
@@ -8,8 +9,10 @@ namespace FHIRUT.API.Services
     public class CompareTestService : ICompareTestService
     {
         public List<TestCaseResult> GenerateComparedResults(
+            YamlTestCaseDefinition testCaseDefinition,
             OperationOutcome outcome,
-            TimeSpan executionTime)
+            TimeSpan executionTime,
+            string YamlPath)
         {
             var status = outcome.Issue.Any(i => i.Severity == OperationOutcome.IssueSeverity.Error)
                 ? "error"
@@ -18,12 +21,12 @@ namespace FHIRUT.API.Services
                     : "success";
 
             return new List<TestCaseResult>
-                {
+            {
                 new TestCaseResult
                 {
-                    TestId = jsonPath,
-                    YamlId = yamlPath,
-                    ExpectedStatus = request.ExpectedStatus,
+                    TestId = testCaseDefinition.TestId,
+                    YamlId = YamlPath,
+                    ExpectedStatus = testCaseDefinition.ExpectedResults.ToString() ?? "",
                     ActualStatus = status,
                     ExecutionTime = executionTime,
                     Issues = outcome.Issue.Select(io => new IssueSummary
