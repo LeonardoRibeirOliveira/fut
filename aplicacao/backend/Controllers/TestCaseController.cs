@@ -31,7 +31,7 @@ public class TestCaseController : ControllerBase
 
             foreach (var request in testCaseRequests)
             {
-                var result = await _testService.RunTestCaseAsync(request.YamlFile, request.JsonFiles);
+                var result = await _testService.RunTestCaseAsync(request.YamlFile);
                 if (result != null) results.Add(result);
             }
 
