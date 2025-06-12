@@ -26,6 +26,7 @@ namespace FHIRUT.API.Services
 
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .IgnoreUnmatchedProperties()
                 .Build();
 
             var testCase = deserializer.Deserialize<YamlTestCaseDefinition>(yamlContent);
