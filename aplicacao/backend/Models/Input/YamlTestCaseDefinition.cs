@@ -12,16 +12,10 @@ namespace FHIRUT.API.Models.Input
         public YamlContext Context { get; set; }
 
         [YamlMember(Alias = "instance_path")]
-        public object InstancePath { get; set; } // Pode ser string ou lista
+        public List<string> InstancePath { get; set; }
 
         [YamlMember(Alias = "expected_results")]
         public YamlExpectedResults ExpectedResults { get; set; }
-    }
-
-    public class YamlTestCaseDefinitionList
-    {
-        [YamlMember(Alias = "test_cases")]
-        public List<YamlTestCaseDefinition> TestCases { get; set; }
     }
 
     public class YamlContext
@@ -37,12 +31,12 @@ namespace FHIRUT.API.Models.Input
         public List<string> Errors { get; set; }
         public List<string> Warnings { get; set; }
         public List<string> Informations { get; set; }
-        public List<YamlInvariant> Invariants { get; set; }
+        public YamlInvariant Invariants { get; set; }
     }
 
     public class YamlInvariant
     {
-        public string Expression { get; set; }
+        public string? Expression { get; set; }
         public bool Expected { get; set; } = true;
     }
 }
