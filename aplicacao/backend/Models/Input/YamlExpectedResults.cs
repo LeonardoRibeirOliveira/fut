@@ -6,6 +6,5 @@
         public List<string> Errors { get; set; } = new List<string>();
         public List<string> Warnings { get; set; } = new List<string>();
         public List<string> Informations { get; set; } = new List<string>();
-        public YamlInvariant Invariants { get; set; } = new YamlInvariant();
     }
 }

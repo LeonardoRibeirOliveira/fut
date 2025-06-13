@@ -8,7 +8,10 @@ export interface TestCaseResult {
   issues: IssueSummary[];
   executionTime: string;
   operationOutcome?: OperationOutcome;
+  passed: boolean;
+  validationMessages: string[];
 }
+
 
 export interface IssueSummary {
   severity: string;

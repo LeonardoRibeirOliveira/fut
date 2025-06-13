@@ -23,12 +23,19 @@
           [ngClass]="{
             'bg-green-100 text-green-800': result.actualStatus === 'success',
             'bg-red-100 text-red-800': result.actualStatus === 'error',
-            'bg-yellow-100 text-yellow-800': result.actualStatus !== 'error' && result.actualStatus !== 'success'
+            'bg-yellow-100 text-yellow-800': result.actualStatus === 'warning',
+            'bg-blue-100 text-blue-800': result.actualStatus === 'information'
           }"
         >
-          {{ result.actualStatus === 'success' ? '✔️ Passed' : 
-             result.actualStatus === 'error' ? '❌ Failed' : '⚠️ ' + result.actualStatus }}
+          {{ 
+            result.actualStatus === 'success' ? '✔️ Success' : 
+            result.actualStatus === 'error' ? '❌ Error' :
+            result.actualStatus === 'warning' ? '⚠️ Warning' :
+            result.actualStatus === 'information' ? 'ℹ️ Information' :
+            result.actualStatus
+          }}
         </span>
+
         <span class="text-xs text-gray-500">
           ⏱️ {{ result.executionTime }}
         </span>
@@ -46,29 +53,32 @@
 
     <div *ngIf="expandedResult === result.jsonId" class="bg-gray-50 p-5 border-t">
       <div class="mb-4">
-        <h4 class="text-sm font-semibold text-gray-700 mb-2">📊 Detalhes do Teste</h4>
-        <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
-          <div>
-            <p><span class="font-medium">Esperado:</span> {{ getExpectedStatus(result.expectedStatus) }}</p>
-            <p><span class="font-medium">Atual:</span> 
-              <span [ngClass]="{
-                'text-red-600': result.actualStatus === 'error',
-                'text-green-600': result.actualStatus === 'success'
-              }">{{ result.actualStatus | titlecase }}</span>
-            </p>
-          </div>
-          <div>
-            <p><span class="font-medium">Tempo de Execução:</span> {{ result.executionTime }}</p>
-          </div>
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">✅ Validação Geral</h4>
+        <div class="p-4 rounded-md text-sm"
+            [ngClass]="{
+              'bg-green-100 text-green-800': result.passed,
+              'bg-red-100 text-red-800': !result.passed
+            }">
+          {{ result.passed ? 'Todos os critérios foram satisfeitos.' : 'Nem todos os critérios foram atendidos.' }}
         </div>
+
+        <ul *ngIf="!result.passed && result.validationMessages.length" class="mt-3 list-disc list-inside text-sm text-gray-700 space-y-1">
+          <li *ngFor="let msg of result.validationMessages">{{ msg }}</li>
+        </ul>
       </div>
+
 
       <div *ngIf="result.issues.length > 0" class="mb-4">
         <h4 class="text-sm font-semibold text-gray-700 mb-2">
           � Problemas ({{ result.issues.length }})
-          <span class="text-xs font-normal text-gray-500 ml-2">
-            {{ countIssuesBySeverity(result.issues, 'error') }} erros, 
-            {{ countIssuesBySeverity(result.issues, 'warning') }} avisos
+          <span 
+            class="px-3 py-1 rounded-full text-xs font-semibold"
+            [ngClass]="{
+              'bg-green-100 text-green-800': result.passed,
+              'bg-red-100 text-red-800': !result.passed
+            }"
+          >
+            {{ result.passed ? '✔️ Passed' : '❌ Failed' }}
           </span>
         </h4>
         <div class="space-y-3">

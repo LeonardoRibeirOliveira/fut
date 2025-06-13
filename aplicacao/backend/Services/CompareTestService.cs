@@ -9,16 +9,23 @@ namespace FHIRUT.API.Services
     public class CompareTestService : ICompareTestService
     {
         public List<TestCaseResult> GenerateComparedResults(
-            YamlTestCaseDefinition testCaseDefinition,
-            OperationOutcome outcome,
-            TimeSpan executionTime,
-            string jsonPath)
+             YamlTestCaseDefinition testCaseDefinition,
+             OperationOutcome outcome,
+             TimeSpan executionTime,
+             string jsonPath)
         {
-            var status = outcome.Issue.Any(i => i.Severity == OperationOutcome.IssueSeverity.Error)
+            var expected = testCaseDefinition.ExpectedResults;
+            var validationMessages = new List<string>();
+
+            var actualStatus = outcome.Issue.Any(i => i.Severity == OperationOutcome.IssueSeverity.Error)
                 ? "error"
                 : outcome.Issue.Any(i => i.Severity == OperationOutcome.IssueSeverity.Warning)
                     ? "warning"
-                    : "success";
+                    : outcome.Issue.Any(i => i.Severity == OperationOutcome.IssueSeverity.Information)
+                        ? "information"
+                        : "success";
+
+            bool passed = CompareExpectedAndActualResults(outcome, expected, validationMessages, actualStatus);
 
             return new List<TestCaseResult>
             {
@@ -26,9 +33,11 @@ namespace FHIRUT.API.Services
                 {
                     TestId = testCaseDefinition.TestId,
                     JsonId = jsonPath,
-                    ExpectedStatus = ConvertExpectedResultsToString(testCaseDefinition.ExpectedResults),
-                    ActualStatus = status,
+                    ExpectedStatus = ConvertExpectedResultsToString(expected),
+                    ActualStatus = actualStatus,
                     ExecutionTime = executionTime,
+                    Passed = passed,
+                    ValidationMessages = validationMessages,
                     Issues = outcome.Issue.Select(io => new IssueSummary
                     {
                         Severity = io.Severity.ToString().ToLower(),
@@ -39,10 +48,55 @@ namespace FHIRUT.API.Services
                             .FirstOrDefault(e => e.Url.Contains("issue-source"))?
                             .Value?.ToString() ?? "validator"
                     }).ToList(),
-                    OperationOutcome = outcome,
+                    OperationOutcome = outcome
                 }
             };
         }
+
+        private bool CompareExpectedAndActualResults(OperationOutcome outcome, YamlExpectedResults expected, List<string> validationMessages, string actualStatus)
+        {
+            var actualErrors = outcome.Issue
+                            .Where(i => i.Severity == OperationOutcome.IssueSeverity.Error)
+                            .Select(i => i.Details?.Text?.Trim() ?? "")
+                            .ToList();
+
+            var actualWarnings = outcome.Issue
+                .Where(i => i.Severity == OperationOutcome.IssueSeverity.Warning)
+                .Select(i => i.Details?.Text?.Trim() ?? "")
+                .ToList();
+
+            var actualInfos = outcome.Issue
+                .Where(i => i.Severity == OperationOutcome.IssueSeverity.Information)
+                .Select(i => i.Details?.Text?.Trim() ?? "")
+                .ToList();
+
+            bool statusMatches = expected.Status.Equals(actualStatus, StringComparison.OrdinalIgnoreCase);
+            if (!statusMatches)
+                validationMessages.Add($"Status esperado {expected.Status.ToUpper()} difere do retornado pelo fhir {actualStatus.ToUpper()}.");
+
+            bool errorsMatch = ListsMatch(expected.Errors, actualErrors);
+            if (!errorsMatch)
+                validationMessages.Add("Os ERRORS retornados pelo fhir não correspondem exatamente aos ERRORS esperados.");
+
+            bool warningsMatch = ListsMatch(expected.Warnings, actualWarnings);
+            if (!warningsMatch)
+                validationMessages.Add("Os WARNINGS retornados pelo fhir não correspondem exatamente aos WARNINGS esperados.");
+
+            bool infosMatch = ListsMatch(expected.Informations, actualInfos);
+            if (!infosMatch)
+                validationMessages.Add("As INFORMATIONS retornados pelo fhir não correspondem exatamente aos INFORMATIONS esperadas.");
+
+            bool passed = statusMatches && errorsMatch && warningsMatch && infosMatch;
+            return passed;
+        }
+
+        private bool ListsMatch(List<string> expected, List<string> actual)
+        {
+            var expectedSet = new HashSet<string>(expected.Select(s => s.Trim()), StringComparer.OrdinalIgnoreCase);
+            var actualSet = new HashSet<string>(actual.Select(s => s.Trim()), StringComparer.OrdinalIgnoreCase);
+            return expectedSet.SetEquals(actualSet);
+        }
+
 
         private string ConvertExpectedResultsToString(YamlExpectedResults expectedResults)
         {
@@ -59,12 +113,6 @@ namespace FHIRUT.API.Services
 
             if (expectedResults?.Informations?.Any() == true)
                 results.Add($"Informations: {string.Join(", ", expectedResults.Informations)}");
-
-            if (expectedResults?.Invariants != null)
-            {
-                results.Add($"Invariant Expression: {expectedResults.Invariants.Expression}");
-                results.Add($"Invariant Expected: {expectedResults.Invariants.Expected}");
-            }
 
             return string.Join(" | ", results);
         }
