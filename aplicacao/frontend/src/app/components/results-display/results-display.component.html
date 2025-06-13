@@ -23,7 +23,7 @@
         </span>
         <svg 
           class="w-5 h-5 text-gray-400 transform transition-transform"
-          [class.rotate-180]="expandedResult === result.testId"
+          [class.rotate-180]="expandedResult === result.jsonId"
           fill="none" 
           viewBox="0 0 24 24" 
           stroke="currentColor"
@@ -33,7 +33,7 @@
       </div>
     </div>
 
-    <div *ngIf="expandedResult === result.testId" class="bg-gray-50 p-5 border-t">
+    <div *ngIf="expandedResult === result.jsonId" class="bg-gray-50 p-5 border-t">
       <div class="mb-4">
         <h4 class="text-sm font-semibold text-gray-700 mb-2">📊 Detalhes do Teste</h4>
         <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
