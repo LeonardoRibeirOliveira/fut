@@ -1,4 +1,7 @@
 ﻿using System.IO.Abstractions;
+using FHIRUT.API.Controllers;
+using FHIRUT.API.Models.Result;
+using FHIRUT.API.Models.Tests;
 using FHIRUT.API.Services.Interfaces;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
@@ -9,94 +12,75 @@ namespace FHIRUT.API.Services
     {
         private readonly IFHIRValidatorService _validatorService;
         private readonly IFileSystem _fileSystem;
+        private readonly ICompareTestService _compareTestService;
+        private readonly IYamlCaseMapperService _yamlCaseMapperService;
         private readonly string _baseDataPath;
+        private readonly ILogger<TestCaseController> _logger;
 
-        public FileBasedTestService(IFileSystem fileSystem, IConfiguration config, IFHIRValidatorService validatorService)
+        public FileBasedTestService(IFileSystem fileSystem, IConfiguration config, IFHIRValidatorService validatorService, ICompareTestService compareTestService, IYamlCaseMapperService yamlCaseMapperService, ILogger<TestCaseController> logger)
         {
             _fileSystem = fileSystem;
             _baseDataPath = config["Data:BasePath"] ?? "fhirut-data";
             _validatorService = validatorService;
+            _compareTestService = compareTestService;
+            _yamlCaseMapperService = yamlCaseMapperService;
+            _logger = logger;
         }
 
-        public async Task<List<OperationOutcome>?> RunTestCaseAsync(string yamlContent, List<string> jsonContents)
+        public async Task<List<TestCaseResult>?> RunTestCaseAsync(List<TestCaseDefinition> testCaseRequests)
         {
-            try
-            {
-                var profiles = ExtractProfilesFromYaml(yamlContent);
-                var outcomes = new List<OperationOutcome>();
+            var allResults = new List<TestCaseResult>();
 
-                foreach (var jsonContent in jsonContents)
+            foreach (var request in testCaseRequests)
+            {
+                try
                 {
-                    var tempJsonPath = Path.GetTempFileName();
-                    await _fileSystem.File.WriteAllTextAsync(tempJsonPath, jsonContent);
+                    var testCaseDefinition = _yamlCaseMapperService.LoadTestCase(request.YamlFile);
 
-                    var xmlOutcome = await _validatorService.ValidateAsync(
-                        tempJsonPath,
-                        profiles,
-                        null);
-
-                    var parsedOutcome = ParseOperationOutcome(xmlOutcome);
-
-                    if (parsedOutcome != null)
+                    var resultTasks = testCaseDefinition.InstancePath.Select(async jsonPath =>
                     {
-                        outcomes.Add(parsedOutcome);
-                    }
+                        try
+                        {
+                            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-                    _fileSystem.File.Delete(tempJsonPath);
+                            var xmlOutcome = await _validatorService.ValidateAsync(
+                                jsonPath,
+                                testCaseDefinition.Context.Profiles,
+                                null);
+
+                            var outcome = ParseOperationOutcome(xmlOutcome);
+                            stopwatch.Stop();
+
+                            return _compareTestService.GenerateComparedResults(
+                                testCaseDefinition,
+                                outcome,
+                                stopwatch.Elapsed,
+                                jsonPath);
+                        }
+                        catch (Exception innerEx)
+                        {
+                            _logger.LogError(innerEx, $"Erro ao validar o caminho {jsonPath}");
+                            return new List<TestCaseResult>(); // ou retorne um erro tratado
+                        }
+                    });
+
+                    var caseResults = await System.Threading.Tasks.Task.WhenAll(resultTasks);
+                    allResults.AddRange(caseResults.SelectMany(r => r));
                 }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Erro ao processar o teste do arquivo {request.YamlFile}");
+                }
+            }
 
-                return outcomes;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error running test case", ex);
-            }
+            return allResults;
         }
 
 
-        private List<string> ExtractProfilesFromYaml(string yamlContent)
-        {
-            var profiles = new List<string>();
-            var lines = yamlContent.Split('\n');
-
-            bool inProfilesSection = false;
-            int baseIndentation = -1;
-
-            foreach (var rawLine in lines)
-            {
-                var line = rawLine.TrimEnd();
-
-                if (line.TrimStart().StartsWith("profiles:"))
-                {
-                    inProfilesSection = true;
-                    baseIndentation = rawLine.IndexOf("profiles:");
-                    continue;
-                }
-
-                if (inProfilesSection)
-                {
-                    int currentIndentation = rawLine.TakeWhile(Char.IsWhiteSpace).Count();
-
-                    if (currentIndentation <= baseIndentation || string.IsNullOrWhiteSpace(line))
-                    {
-                        inProfilesSection = false;
-                        continue;
-                    }
-
-                    if (line.TrimStart().StartsWith("-"))
-                    {
-                        var profile = line.TrimStart().Substring(1).Trim().Trim('"').Trim('\'');
-                        if (!string.IsNullOrEmpty(profile))
-                            profiles.Add(profile);
-                    }
-                }
-            }
-
-            return profiles;
-        }
 
 
-        private OperationOutcome? ParseOperationOutcome(string xml)
+
+        private OperationOutcome ParseOperationOutcome(string xml)
         {
             var parser = new FhirXmlParser();
 
@@ -108,7 +92,7 @@ namespace FHIRUT.API.Services
             catch (FormatException ex)
             {
                 Console.WriteLine($"Erro ao fazer parse do OperationOutcome: {ex.Message}");
-                return null;
+                return new OperationOutcome();
             }
         }
     }

@@ -4,6 +4,7 @@ using FHIRUT.API.Services;
 using FHIRUT.API.Services.Interfaces;
 using Microsoft.Extensions.Options;
 using FHIRUT.API.Models.CLI;
+using System.ComponentModel.DataAnnotations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,8 @@ builder.Services.Configure<ValidadorCliConfig>(builder.Configuration.GetSection(
 builder.Services.AddSingleton<IFileSystem, FileSystem>();
 builder.Services.AddSingleton<IFHIRValidatorService, FHIRValidatorService>();
 builder.Services.AddSingleton<IFileBasedTestService, FileBasedTestService>();
+builder.Services.AddSingleton<ICompareTestService, CompareTestService>();
+builder.Services.AddSingleton<IYamlCaseMapperService, YamlCaseMapperService>();
 builder.Services.AddSingleton<FHIRConfigValidatorService>(sp =>
 {
     var logger = sp.GetRequiredService<ILogger<FHIRConfigValidatorService>>();

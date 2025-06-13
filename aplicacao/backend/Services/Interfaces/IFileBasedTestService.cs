@@ -1,9 +1,11 @@
-﻿using Hl7.Fhir.Model;
+﻿using FHIRUT.API.Models.Result;
+using FHIRUT.API.Models.Tests;
+using Hl7.Fhir.Model;
 
 namespace FHIRUT.API.Services.Interfaces
 {
     public interface IFileBasedTestService
     {
-        Task<List<OperationOutcome>?> RunTestCaseAsync(string yamlContent, List<string> jsonContents);
+        Task<List<TestCaseResult>?> RunTestCaseAsync(List<TestCaseDefinition> yamlContent);
     }
 }

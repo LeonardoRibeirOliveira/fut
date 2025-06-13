@@ -1,0 +1,44 @@
+<div class="max-w-2xl mx-auto p-8 bg-white rounded-2xl shadow-xl ring-1 ring-gray-100">
+  <div class="mb-6">
+    <label class="block text-gray-800 text-sm font-semibold mb-2" for="file-upload">
+      📂 Selecione arquivos YAML
+    </label>
+    <input
+      id="file-upload"
+      type="file"
+      class="block w-full text-sm text-gray-600
+             file:mr-4 file:py-2 file:px-4
+             file:rounded-lg file:border-0
+             file:text-sm file:font-semibold
+             file:bg-blue-600 file:text-white
+             hover:file:bg-blue-700 cursor-pointer"
+      multiple
+      accept=".yaml,.yml"
+      (change)="onFileSelected($event)"
+    >
+  </div>
+
+  <div *ngIf="selectedFiles.length > 0" class="mb-6">
+    <h3 class="text-sm font-medium text-gray-800 mb-2">📄 Arquivos selecionados:</h3>
+    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+      <li *ngFor="let file of selectedFiles">{{ file.name }}</li>
+    </ul>
+  </div>
+
+  <div class="flex justify-end space-x-3">
+    <button
+      *ngIf="selectedFiles.length > 0"
+      (click)="uploadFiles()"
+      class="px-5 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+    >
+      ▶️ Rodar Testes
+    </button>
+    <button
+      *ngIf="selectedFiles.length > 0"
+      (click)="clearSelection()"
+      class="px-5 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+    >
+      🧹 Limpar
+    </button>
+  </div>
+</div>

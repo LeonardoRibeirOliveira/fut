@@ -6,7 +6,5 @@ namespace FHIRUT.API.Models.Tests
     {
         [Required]
         public string YamlFile { get; set; } = string.Empty;
-        [Required]
-        public List<string> JsonFiles { get; set; } = new List<string>();
     }
 }
