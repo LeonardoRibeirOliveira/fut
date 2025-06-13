@@ -10,7 +10,7 @@
 
   <div *ngFor="let result of results" class="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
     <div 
-      class="p-5 flex justify-between items-center bg-white hover:bg-gray-50 cursor-pointer transition"
+      class="p-5 flex justify-between items-center bg-white hover:bg-gray-50 cursor-pointer transition cursor-pointer"
       (click)="toggleExpand(result.jsonId)"
     >
       <div>
@@ -112,7 +112,15 @@
       </div>
 
       <div *ngIf="result.operationOutcome && showOperationOutcome" class="mt-4">
-        <h4 class="text-sm font-semibold text-gray-700 mb-2">📘 Resultado da Operação</h4>
+        <div class="flex justify-between items-center mb-2">
+          <h4 class="text-sm font-semibold text-gray-700">📘 Resultado da Operação</h4>
+          <button 
+            (click)="downloadOperationOutcome(result.operationOutcome, result.testId)"
+            class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-md transition-colors cursor-pointer"
+          >
+            ⬇️ Download JSON
+          </button>
+        </div>
         <pre class="p-4 bg-gray-100 rounded-md text-xs overflow-x-auto">{{ result.operationOutcome | json }}</pre>
       </div>
     </div>

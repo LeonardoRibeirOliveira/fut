@@ -54,4 +54,20 @@ export class ResultsDisplayComponent {
         return '⚠️ ' + status;
     }
   }
+
+  downloadOperationOutcome(operationOutcome: any, testId: string): void {
+    const blob = new Blob([JSON.stringify(operationOutcome, null, 2)], { type: 'application/json' });
+    
+    const url = window.URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `operation-outcome-${testId}-${new Date().toISOString().slice(0, 10)}.json`;
+    
+    document.body.appendChild(a);
+    a.click();
+    
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }
 }
