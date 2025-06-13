@@ -1,0 +1,9 @@
+test_id: Caso-003
+description: Validação de dois pacientes com perfis internacionais
+context:
+  profiles:
+    - http://hl7.org/fhir/StructureDefinition/Patient
+instance_path:
+  - C:\Users\leona\Desktop\jsonteste\Patient-example.json
+expected_results:
+  status: success

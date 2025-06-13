@@ -1,0 +1,15 @@
+test_id: Caso-001
+description: Validação de dois pacientes com perfis internacionais
+context:
+  profiles:
+    - http://hl7.org/fhir/StructureDefinition/Patient
+    - http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient
+instance_path:
+  - C:\Users\leona\Desktop\jsonteste\paciente1.json
+  - C:\Users\leona\Desktop\jsonteste\paciente2.json
+expected_results:
+  status: warning
+  errors: []
+  warnings:
+    - "Constraint failed: dom-6: 'A resource should have narrative for robust management' (defined in http://hl7.org/fhir/StructureDefinition/DomainResource) (Best Practice Recommendation)"
+  informations: []

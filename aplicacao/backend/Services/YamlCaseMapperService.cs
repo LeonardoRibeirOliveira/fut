@@ -45,11 +45,6 @@ namespace FHIRUT.API.Services
                     Errors = testCase.ExpectedResults?.Errors ?? new List<string>(),
                     Warnings = testCase.ExpectedResults?.Warnings ?? new List<string>(),
                     Informations = testCase.ExpectedResults?.Informations ?? new List<string>(),
-                    Invariants = new YamlInvariant
-                    {
-                        Expression = testCase.ExpectedResults?.Invariants.Expression,
-                        Expected = testCase.ExpectedResults?.Invariants.Expected ?? true
-                    }
                 }
             };
         }

@@ -24,10 +24,4 @@ namespace FHIRUT.API.Models.Input
         public List<string> Profiles { get; set; } = new List<string>();
         public List<string> Resources { get; set; } = new List<string>();
     }
-
-    public class YamlInvariant
-    {
-        public string Expression { get; set; }
-        public bool Expected { get; set; } = true;
-    }
 }
