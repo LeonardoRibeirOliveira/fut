@@ -6,7 +6,8 @@ import { CommonModule } from '@angular/common';
   selector: 'app-file-upload',
   templateUrl: './file-upload.component.html',
   styleUrls: ['./file-upload.component.scss'],
-  imports: [CommonModule]
+  imports: [CommonModule],
+  standalone: true,
 })
 export class FileUploadComponent {
   @Output() filesSelected = new EventEmitter<TestCaseDefinition[]>();
@@ -21,10 +22,14 @@ export class FileUploadComponent {
 
   uploadFiles(): void {
     if (this.selectedFiles.length > 0) {
-      const testCases = this.selectedFiles.map(file => ({
-        yamlFilePath: this.getRelativePath(file),
-      }));
-      this.filesSelected.emit(testCases);
+      const readPromises = this.selectedFiles.map(file => this.readFileAsText(file));
+      
+      Promise.all(readPromises).then(contents => {
+        const testCases: TestCaseDefinition[] = contents.map(content => ({
+          yamlFile: content
+        }));
+        this.filesSelected.emit(testCases);
+      });
     }
   }
 
@@ -33,11 +38,12 @@ export class FileUploadComponent {
     window.location.reload();
   }
 
-  private getRelativePath(file: File): string {
-    if ('webkitRelativePath' in file) {
-      return (file as any).webkitRelativePath || file.name;
-    }
-
-    return '';
+  private readFileAsText(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+      reader.readAsText(file);
+    });
   }
 }

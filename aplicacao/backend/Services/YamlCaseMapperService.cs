@@ -17,12 +17,8 @@ namespace FHIRUT.API.Services
             _fileSystem = fileSystem;
         }
 
-        public async Task<YamlTestCaseDefinition> LoadTestCaseAsync(string yamlFilePath)
+        public YamlTestCaseDefinition LoadTestCase(string yamlFile)
         {
-            if (!_fileSystem.File.Exists(yamlFilePath))
-                throw new FileNotFoundException("YAML file not found", yamlFilePath);
-
-            var yamlContent = await _fileSystem.File.ReadAllTextAsync(yamlFilePath);
 
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(UnderscoredNamingConvention.Instance)
@@ -30,7 +26,7 @@ namespace FHIRUT.API.Services
                 .Build();
 
 
-            var testCase = deserializer.Deserialize<YamlTestCaseDefinition>(yamlContent);
+            var testCase = deserializer.Deserialize<YamlTestCaseDefinition>(yamlFile);
 
             return new YamlTestCaseDefinition
             {

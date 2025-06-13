@@ -35,7 +35,7 @@ namespace FHIRUT.API.Services
             {
                 try
                 {
-                    var testCaseDefinition = await _yamlCaseMapperService.LoadTestCaseAsync(request.YamlFilePath);
+                    var testCaseDefinition = _yamlCaseMapperService.LoadTestCase(request.YamlFile);
 
                     var resultTasks = testCaseDefinition.InstancePath.Select(async jsonPath =>
                     {
@@ -69,7 +69,7 @@ namespace FHIRUT.API.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"Erro ao processar o teste do arquivo {request.YamlFilePath}");
+                    _logger.LogError(ex, $"Erro ao processar o teste do arquivo {request.YamlFile}");
                 }
             }
 

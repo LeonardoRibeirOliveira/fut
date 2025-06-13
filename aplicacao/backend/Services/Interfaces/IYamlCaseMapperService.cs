@@ -5,6 +5,6 @@ namespace FHIRUT.API.Services.Interfaces
 {
     public interface IYamlCaseMapperService
     {
-        Task<YamlTestCaseDefinition> LoadTestCaseAsync(string yamlFilePath);
+        YamlTestCaseDefinition LoadTestCase(string yamlFile);
     }
 }

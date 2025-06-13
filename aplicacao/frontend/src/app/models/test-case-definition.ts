@@ -1,3 +1,3 @@
 export interface TestCaseDefinition {
-  yamlFilePath: string;
+  yamlFile: string;
 }
