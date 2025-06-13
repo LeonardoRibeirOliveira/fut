@@ -1,0 +1,19 @@
+{
+  "resourceType": "Patient",
+  "id": "paciente1",
+  "identifier": [
+    {
+      "system": "http://hospital.exemplo.org/pacientes",
+      "value": "123456"
+    }
+  ],
+  "name": [
+    {
+      "use": "official",
+      "family": "Silva",
+      "given": ["João"]
+    }
+  ],
+  "gender": "male",
+  "birthDate": "1985-01-01"
+}
