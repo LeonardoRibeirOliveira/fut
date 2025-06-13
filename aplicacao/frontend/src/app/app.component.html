@@ -1,23 +1,31 @@
 <div class="min-h-screen bg-gray-100 py-8">
-  <div class="max-w-4xl mx-auto px-4">
+  <div class="mx-auto px-4">
     <header class="mb-8 text-center">
       <h1 class="text-3xl font-bold text-gray-800">FHIR Executor de testes - FUT</h1>
       <p class="text-gray-600">Faça o upload de arquivos</p>
     </header>
 
-    <div class="space-y-8">
-      <app-file-upload (filesSelected)="onFilesSelected($event)"></app-file-upload>
+    <div class="flex h-[70vh] rounded-2xl shadow-xl overflow-hidden bg-white">
+      <!-- Sidebar Upload -->
+      <aside class="w-1/5 min-w-[120px] bg-white border-r border-gray-200 flex flex-col justify-between py-8 px-2">
+        <app-file-upload (filesSelected)="onFilesSelected($event)"></app-file-upload>
+      </aside>
 
-      <div *ngIf="isLoading" class="text-center py-8">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-        <p class="mt-2 text-gray-600">Running tests...</p>
-      </div>
+      <!-- Main Results -->
+      <main class="flex-1 bg-gray-50 p-8 overflow-x-auto">
+        <div *ngIf="isLoading" class="text-center py-8">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          <p class="mt-2 text-gray-600">Running tests...</p>
+        </div>
 
-      <div *ngIf="error" class="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-        {{ error }}
-      </div>
+        <div *ngIf="error" class="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          {{ error }}
+        </div>
 
-      <app-results-display [results]="testResults"></app-results-display>
+        <div class="max-w-full">
+          <app-results-display [results]="testResults"></app-results-display>
+        </div>
+      </main>
     </div>
   </div>
 </div>
