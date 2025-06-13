@@ -17,11 +17,4 @@ namespace FHIRUT.API.Models.Input
         [YamlMember(Alias = "expected_results")]
         public YamlExpectedResults ExpectedResults { get; set; } = new YamlExpectedResults();
     }
-
-    public class YamlContext
-    {
-        public List<string> Igs { get; set; } = new List<string>();
-        public List<string> Profiles { get; set; } = new List<string>();
-        public List<string> Resources { get; set; } = new List<string>();
-    }
 }
