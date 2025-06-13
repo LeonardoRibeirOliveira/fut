@@ -7,7 +7,7 @@ namespace FHIRUT.API.Services.Interfaces
 {
     public interface ICompareTestService
     {
-        List<TestCaseResult> GenerateComparedResults(YamlTestCaseDefinition testCaseDefinition, OperationOutcome outcome, TimeSpan executionTime, string YamlPath);
+        List<TestCaseResult> GenerateComparedResults(YamlTestCaseDefinition testCaseDefinition, OperationOutcome outcome, TimeSpan executionTime, string jsonPath);
     }
 
 }

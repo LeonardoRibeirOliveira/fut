@@ -2,7 +2,7 @@ import { OperationOutcome } from "fhir/r4";
 
 export interface TestCaseResult {
   testId: string;
-  yamlId: string;
+  jsonId: string;
   expectedStatus: string;
   actualStatus: string;
   issues: IssueSummary[];

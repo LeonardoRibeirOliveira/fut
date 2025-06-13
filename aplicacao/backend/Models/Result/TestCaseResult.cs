@@ -5,7 +5,7 @@ namespace FHIRUT.API.Models.Result
     public class TestCaseResult
     {
         public string TestId { get; set; } = "";
-        public string YamlId { get; set; } = "";
+        public string JsonId { get; set; } = "";
         public string ExpectedStatus { get; set; } = "";
         public string ActualStatus { get; set; } = "";
         public List<IssueSummary> Issues { get; set; } = new();

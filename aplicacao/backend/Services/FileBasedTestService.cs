@@ -55,7 +55,7 @@ namespace FHIRUT.API.Services
                                 testCaseDefinition,
                                 outcome,
                                 stopwatch.Elapsed,
-                                request.YamlFilePath);
+                                jsonPath);
                         }
                         catch (Exception innerEx)
                         {

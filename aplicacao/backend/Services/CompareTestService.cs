@@ -12,7 +12,7 @@ namespace FHIRUT.API.Services
             YamlTestCaseDefinition testCaseDefinition,
             OperationOutcome outcome,
             TimeSpan executionTime,
-            string YamlPath)
+            string jsonPath)
         {
             var status = outcome.Issue.Any(i => i.Severity == OperationOutcome.IssueSeverity.Error)
                 ? "error"
@@ -25,7 +25,7 @@ namespace FHIRUT.API.Services
                 new TestCaseResult
                 {
                     TestId = testCaseDefinition.TestId,
-                    YamlId = YamlPath,
+                    JsonId = jsonPath,
                     ExpectedStatus = testCaseDefinition.ExpectedResults.ToString() ?? "",
                     ActualStatus = status,
                     ExecutionTime = executionTime,

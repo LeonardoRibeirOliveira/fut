@@ -2,11 +2,11 @@
   <div *ngFor="let result of results" class="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
     <div 
       class="p-5 flex justify-between items-center bg-white hover:bg-gray-50 cursor-pointer transition"
-      (click)="toggleExpand(result.testId)"
+      (click)="toggleExpand(result.jsonId)"
     >
       <div>
         <h3 class="font-semibold text-lg text-gray-800">{{ result.testId }}</h3>
-        <p class="text-sm text-gray-500">🧾 YAML ID: {{ result.yamlId }}</p>
+        <p class="text-sm text-gray-500">🧾 Arquivo Json: {{ result.jsonId }}</p>
       </div>
       <div class="flex items-center space-x-2">
         <span 

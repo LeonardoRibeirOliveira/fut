@@ -12,8 +12,8 @@ export class ResultsDisplayComponent {
   @Input() results: TestCaseResult[] = [];
   expandedResult: string | null = null;
 
-  toggleExpand(testId: string): void {
-    this.expandedResult = this.expandedResult === testId ? null : testId;
+  toggleExpand(jsonId: string): void {
+    this.expandedResult = this.expandedResult === jsonId ? null : jsonId;
   }
 
   formatTimeSpan(timeSpan: any): string {
