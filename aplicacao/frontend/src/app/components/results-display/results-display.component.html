@@ -1,4 +1,13 @@
 <div class="space-y-4 mt-8">
+  <!-- Toggle para mostrar/ocultar operationOutcome -->
+  <div class="flex justify-end items-center mb-2">
+    <label class="inline-flex items-center cursor-pointer">
+      <input type="checkbox" class="sr-only peer" [(ngModel)]="showOperationOutcome">
+      <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+      <span class="ms-3 text-sm font-medium text-gray-700">Mostrar OperationOutcome</span>
+    </label>
+  </div>
+
   <div *ngFor="let result of results" class="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
     <div 
       class="p-5 flex justify-between items-center bg-white hover:bg-gray-50 cursor-pointer transition"
@@ -6,20 +15,22 @@
     >
       <div>
         <h3 class="font-semibold text-lg text-gray-800">{{ result.testId }}</h3>
-        <p class="text-sm text-gray-500">🧾 Arquivo Json: {{ result.jsonId }}</p>
+        <p class="text-sm text-gray-500">🧾 Arquivo Json: {{ getFileName(result.jsonId) }}</p>
       </div>
       <div class="flex items-center space-x-2">
         <span 
           class="px-3 py-1 rounded-full text-xs font-semibold"
           [ngClass]="{
-            'bg-green-100 text-green-800': result.actualStatus === result.expectedStatus,
-            'bg-red-100 text-red-800': result.actualStatus !== result.expectedStatus
+            'bg-green-100 text-green-800': result.actualStatus === 'success',
+            'bg-red-100 text-red-800': result.actualStatus === 'error',
+            'bg-yellow-100 text-yellow-800': result.actualStatus !== 'error' && result.actualStatus !== 'success'
           }"
         >
-          {{ result.actualStatus === result.expectedStatus ? '✔️ Passed' : '❌ Failed' }}
+          {{ result.actualStatus === 'success' ? '✔️ Passed' : 
+             result.actualStatus === 'error' ? '❌ Failed' : '⚠️ ' + result.actualStatus }}
         </span>
         <span class="text-xs text-gray-500">
-          ⏱️ {{ formatTimeSpan(result.executionTime) }}
+          ⏱️ {{ result.executionTime }}
         </span>
         <svg 
           class="w-5 h-5 text-gray-400 transform transition-transform"
@@ -38,33 +49,59 @@
         <h4 class="text-sm font-semibold text-gray-700 mb-2">📊 Detalhes do Teste</h4>
         <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
           <div>
-            <p><span class="font-medium">Esperado:</span> {{ result.expectedStatus }}</p>
-            <p><span class="font-medium">Atual:</span> {{ result.actualStatus }}</p>
+            <p><span class="font-medium">Esperado:</span> {{ getExpectedStatus(result.expectedStatus) }}</p>
+            <p><span class="font-medium">Atual:</span> 
+              <span [ngClass]="{
+                'text-red-600': result.actualStatus === 'error',
+                'text-green-600': result.actualStatus === 'success'
+              }">{{ result.actualStatus | titlecase }}</span>
+            </p>
           </div>
           <div>
-            <p><span class="font-medium">Tempo de Execução:</span> {{ formatTimeSpan(result.executionTime) }}</p>
+            <p><span class="font-medium">Tempo de Execução:</span> {{ result.executionTime }}</p>
           </div>
         </div>
       </div>
 
       <div *ngIf="result.issues.length > 0" class="mb-4">
-        <h4 class="text-sm font-semibold text-gray-700 mb-2">🚨 Problemas ({{ result.issues.length }})</h4>
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">
+          � Problemas ({{ result.issues.length }})
+          <span class="text-xs font-normal text-gray-500 ml-2">
+            {{ countIssuesBySeverity(result.issues, 'error') }} erros, 
+            {{ countIssuesBySeverity(result.issues, 'warning') }} avisos
+          </span>
+        </h4>
         <div class="space-y-3">
-          <div *ngFor="let issue of result.issues" class="p-4 bg-white border rounded-md shadow-sm">
-            <p class="font-semibold" [ngClass]="{
-              'text-red-600': issue.severity === 'error',
-              'text-yellow-600': issue.severity === 'warning',
-              'text-blue-600': issue.severity === 'information'
-            }">
-              {{ issue.severity | titlecase }}: {{ issue.code }}
-            </p>
-            <p class="text-sm text-gray-700">{{ issue.details }}</p>
-            <p class="text-xs text-gray-400 mt-1">📍 Local: {{ issue.location }}</p>
+          <div *ngFor="let issue of result.issues" 
+               class="p-4 bg-white border rounded-md shadow-sm"
+               [ngClass]="{
+                 'border-red-200': issue.severity === 'error',
+                 'border-yellow-200': issue.severity === 'warning'
+               }">
+            <div class="flex items-start">
+              <span *ngIf="issue.severity === 'error'" class="text-red-500 mr-2">✖</span>
+              <span *ngIf="issue.severity === 'warning'" class="text-yellow-500 mr-2">⚠</span>
+              <div>
+                <p class="font-semibold" [ngClass]="{
+                  'text-red-600': issue.severity === 'error',
+                  'text-yellow-600': issue.severity === 'warning',
+                  'text-blue-600': issue.severity === 'information'
+                }">
+                  {{ issue.severity | titlecase }}: {{ issue.code }}
+                </p>
+                <p class="text-sm text-gray-700 mt-1">{{ issue.details }}</p>
+                <div class="flex flex-wrap gap-2 mt-2 text-xs">
+                  <span class="text-gray-400">📍 {{ issue.location }}</span>
+                  <span class="text-gray-400">•</span>
+                  <span class="text-gray-400">🛠️ {{ issue.source }}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div *ngIf="result.operationOutcome" class="mt-4">
+      <div *ngIf="result.operationOutcome && showOperationOutcome" class="mt-4">
         <h4 class="text-sm font-semibold text-gray-700 mb-2">📘 Resultado da Operação</h4>
         <pre class="p-4 bg-gray-100 rounded-md text-xs overflow-x-auto">{{ result.operationOutcome | json }}</pre>
       </div>

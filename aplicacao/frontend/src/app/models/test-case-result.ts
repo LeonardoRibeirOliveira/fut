@@ -6,7 +6,7 @@ export interface TestCaseResult {
   expectedStatus: string;
   actualStatus: string;
   issues: IssueSummary[];
-  executionTime: TimeSpan;
+  executionTime: string;
   operationOutcome?: OperationOutcome;
 }
 
@@ -16,18 +16,4 @@ export interface IssueSummary {
   code: string;
   details: string;
   source: string;
-}
-
-export interface TimeSpan {
-  ticks: number;
-  days: number;
-  hours: number;
-  milliseconds: number;
-  minutes: number;
-  seconds: number;
-  totalDays: number;
-  totalHours: number;
-  totalMilliseconds: number;
-  totalMinutes: number;
-  totalSeconds: number;
 }
