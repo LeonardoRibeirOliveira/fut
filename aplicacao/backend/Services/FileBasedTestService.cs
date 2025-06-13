@@ -1,4 +1,5 @@
 ﻿using System.IO.Abstractions;
+using FHIRUT.API.Controllers;
 using FHIRUT.API.Models.Result;
 using FHIRUT.API.Models.Tests;
 using FHIRUT.API.Services.Interfaces;
@@ -14,50 +15,67 @@ namespace FHIRUT.API.Services
         private readonly ICompareTestService _compareTestService;
         private readonly IYamlCaseMapperService _yamlCaseMapperService;
         private readonly string _baseDataPath;
+        private readonly ILogger<TestCaseController> _logger;
 
-        public FileBasedTestService(IFileSystem fileSystem, IConfiguration config, IFHIRValidatorService validatorService, ICompareTestService compareTestService, IYamlCaseMapperService yamlCaseMapperService)
+        public FileBasedTestService(IFileSystem fileSystem, IConfiguration config, IFHIRValidatorService validatorService, ICompareTestService compareTestService, IYamlCaseMapperService yamlCaseMapperService, ILogger<TestCaseController> logger)
         {
             _fileSystem = fileSystem;
             _baseDataPath = config["Data:BasePath"] ?? "fhirut-data";
             _validatorService = validatorService;
             _compareTestService = compareTestService;
             _yamlCaseMapperService = yamlCaseMapperService;
+            _logger = logger;
         }
 
         public async Task<List<TestCaseResult>?> RunTestCaseAsync(List<TestCaseDefinition> testCaseRequests)
         {
-            try
+            var allResults = new List<TestCaseResult>();
+
+            foreach (var request in testCaseRequests)
             {
-                var testTasks = testCaseRequests.Select(async request =>
+                try
                 {
                     var testCaseDefinition = await _yamlCaseMapperService.LoadTestCaseAsync(request.YamlFilePath);
 
                     var resultTasks = testCaseDefinition.InstancePath.Select(async jsonPath =>
                     {
-                        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                        var xmlOutcome = await _validatorService.ValidateAsync(
-                            jsonPath,
-                            testCaseDefinition.Context.Profiles,
-                            null);
+                        try
+                        {
+                            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-                        var outcome = ParseOperationOutcome(xmlOutcome);
-                        stopwatch.Stop();
+                            var xmlOutcome = await _validatorService.ValidateAsync(
+                                jsonPath,
+                                testCaseDefinition.Context.Profiles,
+                                null);
 
-                        return _compareTestService.GenerateComparedResults(testCaseDefinition, outcome, stopwatch.Elapsed, request.YamlFilePath);
+                            var outcome = ParseOperationOutcome(xmlOutcome);
+                            stopwatch.Stop();
+
+                            return _compareTestService.GenerateComparedResults(
+                                testCaseDefinition,
+                                outcome,
+                                stopwatch.Elapsed,
+                                request.YamlFilePath);
+                        }
+                        catch (Exception innerEx)
+                        {
+                            _logger.LogError(innerEx, $"Erro ao validar o caminho {jsonPath}");
+                            return new List<TestCaseResult>(); // ou retorne um erro tratado
+                        }
                     });
 
-                    var results = await System.Threading.Tasks.Task.WhenAll(resultTasks);
-                    return results.SelectMany(r => r).ToList();
-                });
+                    var caseResults = await System.Threading.Tasks.Task.WhenAll(resultTasks);
+                    allResults.AddRange(caseResults.SelectMany(r => r));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Erro ao processar o teste do arquivo {request.YamlFilePath}");
+                }
+            }
 
-                var allResultGroups = await System.Threading.Tasks.Task.WhenAll(testTasks);
-                return allResultGroups.SelectMany(r => r).ToList();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error running test case", ex);
-            }
+            return allResults;
         }
+
 
 
 
