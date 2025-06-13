@@ -1,0 +1,77 @@
+<div class="space-y-4 mt-8">
+  <div *ngFor="let result of results" class="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+    <div 
+      class="p-5 flex justify-between items-center bg-white hover:bg-gray-50 cursor-pointer transition"
+      (click)="toggleExpand(result.testId)"
+    >
+      <div>
+        <h3 class="font-semibold text-lg text-gray-800">{{ result.testId }}</h3>
+        <p class="text-sm text-gray-500">🧾 YAML ID: {{ result.yamlId }}</p>
+      </div>
+      <div class="flex items-center space-x-2">
+        <span 
+          class="px-3 py-1 rounded-full text-xs font-semibold"
+          [ngClass]="{
+            'bg-green-100 text-green-800': result.actualStatus === result.expectedStatus,
+            'bg-red-100 text-red-800': result.actualStatus !== result.expectedStatus
+          }"
+        >
+          {{ result.actualStatus === result.expectedStatus ? '✔️ Passed' : '❌ Failed' }}
+        </span>
+        <span class="text-xs text-gray-500">
+          ⏱️ {{ formatTimeSpan(result.executionTime) }}
+        </span>
+        <svg 
+          class="w-5 h-5 text-gray-400 transform transition-transform"
+          [class.rotate-180]="expandedResult === result.testId"
+          fill="none" 
+          viewBox="0 0 24 24" 
+          stroke="currentColor"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </div>
+
+    <div *ngIf="expandedResult === result.testId" class="bg-gray-50 p-5 border-t">
+      <div class="mb-4">
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">📊 Detalhes do Teste</h4>
+        <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+          <div>
+            <p><span class="font-medium">Esperado:</span> {{ result.expectedStatus }}</p>
+            <p><span class="font-medium">Atual:</span> {{ result.actualStatus }}</p>
+          </div>
+          <div>
+            <p><span class="font-medium">Tempo de Execução:</span> {{ formatTimeSpan(result.executionTime) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="result.issues.length > 0" class="mb-4">
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">🚨 Problemas ({{ result.issues.length }})</h4>
+        <div class="space-y-3">
+          <div *ngFor="let issue of result.issues" class="p-4 bg-white border rounded-md shadow-sm">
+            <p class="font-semibold" [ngClass]="{
+              'text-red-600': issue.severity === 'error',
+              'text-yellow-600': issue.severity === 'warning',
+              'text-blue-600': issue.severity === 'information'
+            }">
+              {{ issue.severity | titlecase }}: {{ issue.code }}
+            </p>
+            <p class="text-sm text-gray-700">{{ issue.details }}</p>
+            <p class="text-xs text-gray-400 mt-1">📍 Local: {{ issue.location }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="result.operationOutcome" class="mt-4">
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">📘 Resultado da Operação</h4>
+        <pre class="p-4 bg-gray-100 rounded-md text-xs overflow-x-auto">{{ result.operationOutcome | json }}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="results.length === 0" class="text-center py-12 text-gray-400 text-sm">
+    Nenhum resultado disponível. Faça upload e execute os testes para visualizar os resultados.
+  </div>
+</div>
