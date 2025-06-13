@@ -26,7 +26,7 @@ namespace FHIRUT.API.Services
                 {
                     TestId = testCaseDefinition.TestId,
                     JsonId = jsonPath,
-                    ExpectedStatus = testCaseDefinition.ExpectedResults.ToString() ?? "",
+                    ExpectedStatus = ConvertExpectedResultsToString(testCaseDefinition.ExpectedResults),
                     ActualStatus = status,
                     ExecutionTime = executionTime,
                     Issues = outcome.Issue.Select(io => new IssueSummary
@@ -44,6 +44,29 @@ namespace FHIRUT.API.Services
             };
         }
 
-    }
+        private string ConvertExpectedResultsToString(YamlExpectedResults expectedResults)
+        {
+            var results = new List<string>();
 
+            if (!string.IsNullOrWhiteSpace(expectedResults?.Status))
+                results.Add($"Status: {expectedResults.Status}");
+
+            if (expectedResults?.Errors?.Any() == true)
+                results.Add($"Errors: {string.Join(", ", expectedResults.Errors)}");
+
+            if (expectedResults?.Warnings?.Any() == true)
+                results.Add($"Warnings: {string.Join(", ", expectedResults.Warnings)}");
+
+            if (expectedResults?.Informations?.Any() == true)
+                results.Add($"Informations: {string.Join(", ", expectedResults.Informations)}");
+
+            if (expectedResults?.Invariants != null)
+            {
+                results.Add($"Invariant Expression: {expectedResults.Invariants.Expression}");
+                results.Add($"Invariant Expected: {expectedResults.Invariants.Expected}");
+            }
+
+            return string.Join(" | ", results);
+        }
+    }
 }

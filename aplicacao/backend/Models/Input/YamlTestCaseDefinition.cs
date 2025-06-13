@@ -25,15 +25,6 @@ namespace FHIRUT.API.Models.Input
         public List<string> Resources { get; set; } = new List<string>();
     }
 
-    public class YamlExpectedResults
-    {
-        public string Status { get; set; } = "success"; // Valor padrão
-        public List<string> Errors { get; set; } = new List<string>();
-        public List<string> Warnings { get; set; } = new List<string>();
-        public List<string> Informations { get; set; } = new List<string>();
-        public YamlInvariant Invariants { get; set; } = new YamlInvariant();
-    }
-
     public class YamlInvariant
     {
         public string Expression { get; set; }
